@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body { @apply bg-light text-ink; }
+  a { @apply text-pine; }
+}
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center px-4 py-2 rounded-2xl font-medium transition disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply btn bg-mint text-white hover:brightness-110 shadow-soft; }
+  .btn-secondary { @apply btn bg-aqua text-ink hover:brightness-110; }
+  .btn-ghost { @apply btn bg-transparent text-mint hover:bg-mint/40; }
+
+  .input { @apply w-full px-3 py-2 rounded-xl border border-mist/40 bg-white focus:outline-none focus:ring-2 focus:ring-aqua; }
+  .textarea { @apply w-full px-3 py-2 rounded-xl border border-mist/40 bg-white focus:outline-none focus:ring-2 focus:ring-aqua; }
+  .file-input { @apply block w-full text-sm text-ink border border-mist/40 rounded-xl bg-white file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-mint file:text-ink hover:file:bg-mint/80; }
+
+  .card { @apply bg-white rounded-2xl shadow-soft p-6; }
+  .chip { @apply inline-flex items-center px-2.5 py-1 rounded-full bg-mint text-ink text-xs font-medium; }
+}
+@layer base {
+  body { @apply bg-light text-ink; }
+  a { @apply text-mint; }
+}
