@@ -1,0 +1,1 @@
+@extends('layouts.admin') @section('content') <div>Users – coming soon</div> @endsection
