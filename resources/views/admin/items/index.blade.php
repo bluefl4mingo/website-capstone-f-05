@@ -4,46 +4,6 @@
 @section('page-title','Items')
 
 @section('content')
-@php
-    // Dummy data (replace with DB records later)
-    $items = [
-        [
-            'id' => 1,
-            'nama_item' => 'Meriam VOC abad XIX',
-            'deskripsi' => 'Meriam besi dari era kolonial.',
-            'kategori' => 'Senjata',
-            'lokasi_pameran' => 'Galeri A',
-            'tanggal_penambahan' => '2024-12-12',
-            'audio_count' => 3,
-            'nfc_count' => 1,
-        ],
-        [
-            'id' => 2,
-            'nama_item' => 'Diorama Perang Diponegoro',
-            'deskripsi' => 'Diorama peristiwa sejarah.',
-            'kategori' => 'Diorama',
-            'lokasi_pameran' => 'Galeri B',
-            'tanggal_penambahan' => '2025-01-05',
-            'audio_count' => 2,
-            'nfc_count' => 2,
-        ],
-        [
-            'id' => 3,
-            'nama_item' => 'Patung Jenderal Sudirman',
-            'deskripsi' => 'Patung pahlawan nasional.',
-            'kategori' => 'Patung',
-            'lokasi_pameran' => 'Lobby',
-            'tanggal_penambahan' => '2025-01-20',
-            'audio_count' => 1,
-            'nfc_count' => 1,
-        ],
-    ];
-
-    // For the filter dropdowns (collect distincts in real app)
-    $categories = ['Senjata','Diorama','Patung'];
-    $locations  = ['Galeri A', 'Galeri B', 'Lobby'];
-@endphp
-
 <div x-data="{ openCreate:false }" class="space-y-4">
 
     {{-- Top bar: title, search, filters, create --}}
@@ -54,22 +14,22 @@
         </div>
 
         <div class="flex flex-col md:flex-row gap-2 md:items-center">
-            <div class="flex items-center gap-2">
-                <input type="text" placeholder="Cari nama / deskripsi…" class="w-64 rounded-lg border-gray-200"
-                       />
-                <select class="rounded-lg border-gray-200">
+            <form method="GET" class="flex items-center gap-2">
+                <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama / deskripsi…" class="w-64 rounded-lg border-gray-200" />
+                <select name="category" class="rounded-lg border-gray-200">
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $cat)
-                        <option>{{ $cat }}</option>
+                        <option value="{{ $cat }}" @selected($category === $cat)>{{ $cat }}</option>
                     @endforeach
                 </select>
-                <select class="rounded-lg border-gray-200">
+                <select name="location" class="rounded-lg border-gray-200">
                     <option value="">Semua Lokasi</option>
                     @foreach($locations as $loc)
-                        <option>{{ $loc }}</option>
+                        <option value="{{ $loc }}" @selected($location === $loc)>{{ $loc }}</option>
                     @endforeach
                 </select>
-            </div>
+                <button type="submit" class="px-3 py-2 rounded-lg border hover:bg-gray-50">Filter</button>
+            </form>
 
             <button @click="openCreate = true"
                     class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
@@ -93,28 +53,28 @@
             </tr>
             </thead>
             <tbody class="divide-y">
-            @forelse ($items as $it)
+            @forelse ($items as $item)
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3">
-                        <div class="font-medium">{{ $it['nama_item'] }}</div>
-                        <div class="text-sm text-gray-500 line-clamp-1">{{ $it['deskripsi'] }}</div>
+                        <div class="font-medium">{{ $item->nama_item }}</div>
+                        <div class="text-sm text-gray-500 line-clamp-1">{{ $item->deskripsi }}</div>
                     </td>
-                    <td class="px-4 py-3">{{ $it['kategori'] }}</td>
-                    <td class="px-4 py-3">{{ $it['lokasi_pameran'] }}</td>
-                    <td class="px-4 py-3 text-right">{{ $it['audio_count'] }}</td>
-                    <td class="px-4 py-3 text-right">{{ $it['nfc_count'] }}</td>
-                    <td class="px-4 py-3">{{ \Carbon\Carbon::parse($it['tanggal_penambahan'])->isoFormat('D MMM Y') }}</td>
+                    <td class="px-4 py-3">{{ $item->kategori ?? '—' }}</td>
+                    <td class="px-4 py-3">{{ $item->lokasi_pameran ?? '—' }}</td>
+                    <td class="px-4 py-3 text-right">{{ $item->audio_files_count }}</td>
+                    <td class="px-4 py-3 text-right">{{ $item->nfc_tags_count }}</td>
+                    <td class="px-4 py-3">{{ $item->tanggal_penambahan ? \Carbon\Carbon::parse($item->tanggal_penambahan)->isoFormat('D MMM Y') : '—' }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-2">
                             {{-- Detail/Edit (placeholder) --}}
-                            <a href="#" class="px-3 py-1.5 rounded-lg border text-sm text-aqua hover:bg-gray-50">Detail</a>
+                            <button type="button" class="px-3 py-1.5 rounded-lg border text-sm text-aqua hover:bg-gray-50">Detail</button>
 
                             {{-- Manage Audio (go to audio page filtered by item) --}}
-                            <a href="{{ route('admin.audio.index') }}?item={{ $it['id'] }}"
+                            <a href="{{ route('admin.audio.index', ['item' => $item->id]) }}"
                                class="px-3 py-1.5 rounded-lg bg-mint/40 text-sm text-aquahover:bg-mint/60">Kelola Audio</a>
 
                             {{-- Manage NFC --}}
-                            <a href="{{ route('admin.nfc.index') }}?item={{ $it['id'] }}"
+                            <a href="{{ route('admin.nfc.index', ['item' => $item->id]) }}"
                                class="px-3 py-1.5 rounded-lg bg-mint/20 text-sm text-aquahover:bg-mint/40">Kelola NFC</a>
                         </div>
                     </td>
@@ -128,6 +88,11 @@
             @endforelse
             </tbody>
         </table>
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-4">
+        {{ $items->links() }}
     </div>
 
     {{-- Simple create modal (no backend yet) --}}
@@ -155,32 +120,32 @@
             <button class="p-2 rounded hover:bg-gray-100" @click="openCreate=false" aria-label="Close">✕</button>
         </div>
 
-        <form class="grid grid-cols-1 gap-4" @submit.prevent="openCreate=false">
+        <form method="POST" action="{{ route('admin.items.store') }}" class="grid grid-cols-1 gap-4">
             @csrf
             <div>
             <label class="text-sm font-medium">Nama Item</label>
-            <input type="text" class="mt-1 w-full rounded-lg border-gray-200" required>
+            <input type="text" name="nama_item" class="mt-1 w-full rounded-lg border-gray-200" required>
             </div>
 
             <div>
             <label class="text-sm font-medium">Deskripsi</label>
-            <textarea class="mt-1 w-full rounded-lg border-gray-200" rows="3"></textarea>
+            <textarea name="deskripsi" class="mt-1 w-full rounded-lg border-gray-200" rows="3"></textarea>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="text-sm font-medium">Kategori</label>
-                <input type="text" class="mt-1 w-full rounded-lg border-gray-200">
+                <input type="text" name="kategori" class="mt-1 w-full rounded-lg border-gray-200">
             </div>
             <div>
                 <label class="text-sm font-medium">Lokasi Pameran</label>
-                <input type="text" class="mt-1 w-full rounded-lg border-gray-200">
+                <input type="text" name="lokasi_pameran" class="mt-1 w-full rounded-lg border-gray-200">
             </div>
             </div>
 
             <div>
             <label class="text-sm font-medium">Tanggal Penambahan</label>
-            <input type="date" class="mt-1 w-full rounded-lg border-gray-200">
+            <input type="date" name="tanggal_penambahan" class="mt-1 w-full rounded-lg border-gray-200" value="{{ date('Y-m-d') }}" required>
             </div>
 
             <div class="mt-6 flex justify-end gap-2">

@@ -4,25 +4,6 @@
 @section('page-title','Audio Files')
 
 @section('content')
-@php
-  // Dummy data (ganti dengan data DB nanti)
-  // ERD hint: AudioFile ↔ Item (prototype: 1–1)
-  $items = [
-    ['id'=>1,'nama'=>'Meriam VOC abad XIX','kategori'=>'Senjata','lokasi'=>'Galeri A'],
-    ['id'=>2,'nama'=>'Diorama Perang Diponegoro','kategori'=>'Diorama','lokasi'=>'Galeri B'],
-    ['id'=>3,'nama'=>'Patung Jenderal Sudirman','kategori'=>'Patung','lokasi'=>'Lobby'],
-  ];
-
-  // Dummy "audio files" joined to items (null => belum ada)
-  $audio = [
-    1 => ['filename'=>'meriam_voc_id.wav','lang'=>'id','duration'=>'01:42','size'=>'3.8 MB','storage'=>'s3','updated_at'=>'2025-01-21 14:12','in_sync'=>true],
-    2 => null,
-    3 => ['filename'=>'sudirman_id.wav','lang'=>'id','duration'=>'00:58','size'=>'2.2 MB','storage'=>'local','updated_at'=>'2025-01-19 10:03','in_sync'=>false],
-  ];
-
-  $selectedItemId = (int) request('item'); // dari Items page: ?item=ID
-@endphp
-
 <section
   x-data="{
     openUpload:false,
@@ -41,18 +22,18 @@
     </div>
 
     <div class="flex flex-col md:flex-row gap-2 md:items-center">
-      {{-- Filters (dummy) --}}
+      {{-- Filters --}}
       <div class="flex items-center gap-2">
         <form method="GET" class="flex items-center gap-2">
           <select name="item" class="rounded-lg border-gray-200">
             <option value="">Semua Item</option>
-            @foreach($items as $it)
-              <option value="{{ $it['id'] }}" @selected($selectedItemId === $it['id'])>
-                #{{ $it['id'] }} — {{ $it['nama'] }}
+            @foreach($items as $item)
+              <option value="{{ $item->id }}" @selected($selectedItemId === $item->id)>
+                #{{ $item->id }} — {{ $item->nama_item }}
               </option>
             @endforeach
           </select>
-          <button class="px-3 py-2 rounded-lg border hover:bg-gray-50">Terapkan</button>
+          <button type="submit" class="px-3 py-2 rounded-lg border hover:bg-gray-50">Terapkan</button>
         </form>
       </div>
 
@@ -82,57 +63,55 @@
         </tr>
       </thead>
       <tbody class="divide-y">
-        @foreach($items as $it)
-          @php $a = $audio[$it['id']] ?? null; @endphp
-          {{-- Filter: jika ?item= terpilih --}}
-          @if(!$selectedItemId || $selectedItemId === $it['id'])
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3">
-                <div class="font-medium">#{{ $it['id'] }} — {{ $it['nama'] }}</div>
-              </td>
-              <td class="px-4 py-3">
-                <div class="text-sm">{{ $it['kategori'] }}</div>
-                <div class="text-xs text-gray-500">{{ $it['lokasi'] }}</div>
-              </td>
-              <td class="px-4 py-3">{{ $a['filename'] ?? '—' }}</td>
-              <td class="px-4 py-3">{{ $a['lang'] ?? '—' }}</td>
-              <td class="px-4 py-3">{{ $a['duration'] ?? '—' }}</td>
-              <td class="px-4 py-3">{{ $a['size'] ?? '—' }}</td>
-              <td class="px-4 py-3">{{ $a['storage'] ?? '—' }}</td>
-              <td class="px-4 py-3">
-                {{ $a['updated_at'] ?? '—' }}
-              </td>
-              <td class="px-4 py-3">
-                @if($a)
-                  @if($a['in_sync'])
-                    <span class="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded">✔ Sinkron</span>
-                  @else
-                    <span class="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-1 rounded">⟳ Perlu Sync</span>
-                  @endif
-                @else
-                  <span class="inline-flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-1 rounded">—</span>
-                @endif
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex justify-end gap-2 text-sm">
-                  @if($a)
-                    <button type="button"
-                            class="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
-                            @click="pick({{ $it['id'] }})">Ganti</button>
-                    <button type="button" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50">Unduh</button>
-                    <button type="button" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">Hapus</button>
-                  @else
-                    <button type="button"
-                            class="px-3 py-1.5 rounded-lg bg-mint/40 hover:bg-mint/60"
-                            @click="pick({{ $it['id'] }})">Upload</button>
-                  @endif
-                </div>
-              </td>
-            </tr>
-          @endif
-        @endforeach
+        @forelse($audioFiles as $audio)
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <div class="font-medium">#{{ $audio->item_id }} — {{ $audio->item->nama_item ?? 'N/A' }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-sm">{{ $audio->item->kategori ?? '—' }}</div>
+              <div class="text-xs text-gray-500">{{ $audio->item->lokasi_pameran ?? '—' }}</div>
+            </td>
+            <td class="px-4 py-3">{{ $audio->nama_file }}</td>
+            <td class="px-4 py-3">{{ strtoupper($audio->format_file ?? 'id') }}</td>
+            <td class="px-4 py-3">{{ $audio->durasi ?? '—' }}</td>
+            <td class="px-4 py-3">—</td>
+            <td class="px-4 py-3">{{ config('filesystems.default') }}</td>
+            <td class="px-4 py-3">
+              {{ $audio->updated_at ? $audio->updated_at->format('Y-m-d H:i') : '—' }}
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded">✔ Sinkron</span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-2 text-sm">
+                <button type="button"
+                        class="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
+                        @click="pick({{ $audio->item_id }})">Ganti</button>
+                <button type="button" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50">Unduh</button>
+                <form method="POST" action="{{ route('admin.audio.destroy', $audio) }}" class="inline" 
+                      onsubmit="return confirm('Hapus audio ini?')">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">Hapus</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="10" class="px-4 py-10 text-center text-gray-500">
+              Belum ada audio files.
+            </td>
+          </tr>
+        @endforelse
       </tbody>
     </table>
+  </div>
+
+  {{-- Pagination --}}
+  <div class="mt-4">
+    {{ $audioFiles->links() }}
   </div>
 
   {{-- Notes / Help --}}
@@ -158,44 +137,36 @@
         </div>
 
         {{-- Prototype form: prevent submit, no backend yet --}}
-        <form class="grid grid-cols-1 gap-4" @submit.prevent="openUpload=false">
+        <form method="POST" action="{{ route('admin.audio.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4">
           @csrf
 
           <div>
             <label class="text-sm font-medium">Item</label>
-            <select x-model="form.item_id" class="mt-1 w-full rounded-lg border-gray-200" required>
+            <select name="item_id" x-model="form.item_id" class="mt-1 w-full rounded-lg border-gray-200" required>
               <option value="" disabled>Pilih item…</option>
-              @foreach($items as $it)
-                <option value="{{ $it['id'] }}">#{{ $it['id'] }} — {{ $it['nama'] }}</option>
+              @foreach($items as $item)
+                <option value="{{ $item->id }}">#{{ $item->id }} — {{ $item->nama_item }}</option>
               @endforeach
             </select>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="text-sm font-medium">Bahasa</label>
-              <select x-model="form.lang" class="mt-1 w-full rounded-lg border-gray-200">
-                <option value="id">Indonesia (id)</option>
-                {{-- future ready: <option value="en">English (en)</option> --}}
-              </select>
+              <label class="text-sm font-medium">Nama File</label>
+              <input type="text" name="nama_file" class="mt-1 w-full rounded-lg border-gray-200" required>
             </div>
             <div>
-              <label class="text-sm font-medium">Berkas Audio (.wav)</label>
-              <input type="file" accept=".wav,audio/wav" class="mt-1 w-full rounded-lg border-gray-200"
+              <label class="text-sm font-medium">Berkas Audio (.mp3, .wav, .ogg, .m4a)</label>
+              <input type="file" name="file" accept=".wav,.mp3,.ogg,.m4a,audio/*" class="mt-1 w-full rounded-lg border-gray-200"
                      @change="form.file = $event.target.files[0]" required>
             </div>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium">Catatan (opsional)</label>
-            <input type="text" x-model="form.notes" class="mt-1 w-full rounded-lg border-gray-200" placeholder="Contoh: revisi narasi, volume diperbaiki">
           </div>
 
           <div class="mt-6 flex items-center justify-between">
             <p class="text-xs text-gray-500">Setelah tersimpan, perangkat akan menandai item sebagai <em>Perlu Sync</em> hingga berhasil sinkron.</p>
             <div class="flex gap-2">
               <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openUpload=false">Batal</button>
-              <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90">Simpan (Dummy)</button>
+              <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90">Upload</button>
             </div>
           </div>
         </form>
