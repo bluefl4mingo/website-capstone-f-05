@@ -120,6 +120,32 @@
 
       {{-- scrollable page content --}}
       <main class="flex-1 overflow-y-auto p-6">
+        {{-- Flash Messages --}}
+        @if(session('status'))
+          <div class="mb-4 rounded-lg bg-green-50 p-4 text-green-800 border border-green-200" x-data="{ show: true }" x-show="show" x-transition>
+            <div class="flex items-center justify-between">
+              <span>{{ session('status') }}</span>
+              <button @click="show = false" class="text-green-600 hover:text-green-800">✕</button>
+            </div>
+          </div>
+        @endif
+
+        @if($errors->any())
+          <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-800 border border-red-200" x-data="{ show: true }" x-show="show" x-transition>
+            <div class="flex items-center justify-between">
+              <div>
+                <strong>Terdapat kesalahan:</strong>
+                <ul class="mt-2 list-disc list-inside">
+                  @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                  @endforeach
+                </ul>
+              </div>
+              <button @click="show = false" class="text-red-600 hover:text-red-800">✕</button>
+            </div>
+          </div>
+        @endif
+
         @yield('content')
       </main>
 

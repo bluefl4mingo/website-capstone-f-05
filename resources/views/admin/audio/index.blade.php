@@ -55,7 +55,6 @@
           <th class="text-left px-4 py-3">Filename</th>
           <th class="text-left px-4 py-3">Lang</th>
           <th class="text-left px-4 py-3">Durasi</th>
-          <th class="text-left px-4 py-3">Ukuran</th>
           <th class="text-left px-4 py-3">Storage</th>
           <th class="text-left px-4 py-3">Update</th>
           <th class="text-left px-4 py-3">Sync</th>
@@ -74,8 +73,7 @@
             </td>
             <td class="px-4 py-3">{{ $audio->nama_file }}</td>
             <td class="px-4 py-3">{{ strtoupper($audio->format_file ?? 'id') }}</td>
-            <td class="px-4 py-3">{{ $audio->durasi ?? '—' }}</td>
-            <td class="px-4 py-3">—</td>
+            <td class="px-4 py-3">{{ $audio->formatted_duration }}</td>
             <td class="px-4 py-3">{{ config('filesystems.default') }}</td>
             <td class="px-4 py-3">
               {{ $audio->updated_at ? $audio->updated_at->format('Y-m-d H:i') : '—' }}
