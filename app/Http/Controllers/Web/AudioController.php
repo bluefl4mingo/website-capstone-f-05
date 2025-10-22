@@ -3,86 +3,128 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreAudioRequest;
+use App\Http\Requests\UpdateAudioRequest;
 use App\Models\Audio;
+use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AudioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $audios = Audio::with('category')->latest()->paginate(15);
+        return view('audio.index', compact('audios'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        $categories = Category::orderBy('name')->get();
+        return view('audio.create', compact('categories'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreAudioRequest $request)
     {
-    $this->authorize('create', Audio::class);
+        // (opsional) otorisasi jika pakai Policy
+        // $this->authorize('create', Audio::class);
 
-    $file = $request->file('file');
-    $path = Storage::disk('s3')->putFile('audios', $file);  // simpan ke S3
+        $file = $request->file('file');
+        $extension = $file->guessExtension() ?: $file->getClientOriginalExtension();
+        $blob = 'audios/'.Str::uuid().'.'.$extension;
 
-    $audio = Audio::create([
-        'title'        => $request->string('title'),
-        'description'  => $request->string('description'),
-        'category_id'  => $request->input('category_id'),
-        'storage_path' => $path,
-        'mime_type'    => $file->getMimeType(),
-        'size_bytes'   => $file->getSize(),
-        // 'duration_sec' => ... (opsional, jika ekstrak durasi)
-    ]);
+        DB::beginTransaction();
+        try {
+            // A) Cara sederhana (baik untuk file kecil–sedang)
+            Storage::disk('gcs')->put($blob, file_get_contents($file->getRealPath()));
 
-    return redirect()->route('audios.index')->with('status', 'Audio uploaded.');
+            // B) Alternatif hemat memori (untuk file besar)
+            // $stream = fopen($file->getRealPath(), 'r');
+            // Storage::disk('gcs')->writeStream($blob, $stream);
+            // fclose($stream);
+
+            Audio::create([
+                'title'        => $request->string('title'),
+                'description'  => $request->string('description'),
+                'category_id'  => $request->input('category_id'),
+                'storage_path' => $blob,
+                'mime_type'    => $file->getMimeType(),
+                'size_bytes'   => $file->getSize(),
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('audios.index')
+                ->with('status', 'Audio berhasil diunggah ke Google Cloud Storage.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            // Bersihkan blob jika sempat terunggah tapi DB gagal
+            try { Storage::disk('gcs')->delete($blob); } catch (\Throwable $ignored) {}
+            return back()->withErrors(['file' => 'Gagal mengunggah: '.$e->getMessage()])->withInput();
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Audio $audio)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Audio $audio)
     {
-        //
+        $categories = Category::orderBy('name')->get();
+        return view('audio.edit', compact('audio','categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Audio $audio)
+    public function update(UpdateAudioRequest $request, Audio $audio)
     {
-        //
+        // $this->authorize('update', $audio);
+
+        DB::beginTransaction();
+        try {
+            // Jika ada file baru, unggah & hapus yang lama
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $ext  = $file->guessExtension() ?: $file->getClientOriginalExtension();
+                $newBlob = 'audios/'.Str::uuid().'.'.$ext;
+
+                Storage::disk('gcs')->put($newBlob, file_get_contents($file->getRealPath()));
+                // hapus lama (jika ada)
+                if ($audio->storage_path) {
+                    Storage::disk('gcs')->delete($audio->storage_path);
+                }
+
+                $audio->storage_path = $newBlob;
+                $audio->mime_type    = $file->getMimeType();
+                $audio->size_bytes   = $file->getSize();
+            }
+
+            $audio->title        = $request->string('title');
+            $audio->description  = $request->string('description');
+            $audio->category_id  = $request->input('category_id');
+            $audio->save();
+
+            DB::commit();
+            return redirect()->route('audios.index')->with('status', 'Audio berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->withErrors(['file' => 'Gagal memperbarui: '.$e->getMessage()])->withInput();
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Audio $audio)
     {
-        $this->authorize('delete', $audio);
+        // $this->authorize('delete', $audio);
 
-        // hapus file di S3
-        Storage::disk('s3')->delete($audio->storage_path);
+        DB::beginTransaction();
+        try {
+            if ($audio->storage_path) {
+                Storage::disk('gcs')->delete($audio->storage_path);
+            }
+            $audio->delete();
+            DB::commit();
 
-        $audio->delete();
-
-        return back()->with('status', 'Audio deleted.');
+            return back()->with('status', 'Audio dihapus.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->withErrors(['file' => 'Gagal menghapus: '.$e->getMessage()]);
+        }
     }
 }
