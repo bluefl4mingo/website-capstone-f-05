@@ -4,21 +4,6 @@
 @section('page-title','NFC Tags')
 
 @section('content')
-@php
-  // Dummy data (replace with DB data later)
-  $tags = [
-    ['id'=>1, 'kode_tag'=>'04A2246B9C21', 'item'=>'Meriam VOC abad XIX', 'lokasi'=>'Galeri A', 'status'=>'Aktif'],
-    ['id'=>2, 'kode_tag'=>'03B1158D7F91', 'item'=>'Diorama Perang Diponegoro', 'lokasi'=>'Galeri B', 'status'=>'Aktif'],
-    ['id'=>3, 'kode_tag'=>'05C1987AB412', 'item'=>null, 'lokasi'=>null, 'status'=>'Belum dikaitkan'],
-  ];
-
-  $items = [
-    ['id'=>1, 'nama'=>'Meriam VOC abad XIX'],
-    ['id'=>2, 'nama'=>'Diorama Perang Diponegoro'],
-    ['id'=>3, 'nama'=>'Patung Jenderal Sudirman'],
-  ];
-@endphp
-
 <section x-data="{ openAssign:false, selectedTag:null }" x-cloak class="space-y-4">
   {{-- Top bar --}}
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -28,7 +13,9 @@
     </div>
 
     <div class="flex flex-col md:flex-row gap-2 md:items-center">
-      <input type="text" placeholder="Cari kode atau nama item…" class="w-64 rounded-lg border-gray-200">
+      <form method="GET" class="flex-1">
+        <input type="text" name="q" value="{{ $q }}" placeholder="Cari kode atau nama item…" class="w-64 rounded-lg border-gray-200">
+      </form>
       <button type="button"
               @click="openAssign = true; selectedTag = null"
               class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
@@ -50,13 +37,13 @@
         </tr>
       </thead>
       <tbody class="divide-y">
-        @forelse($tags as $t)
+        @forelse($tags as $tag)
           <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-mono text-sm">{{ $t['kode_tag'] }}</td>
-            <td class="px-4 py-3">{{ $t['item'] ?? '—' }}</td>
-            <td class="px-4 py-3">{{ $t['lokasi'] ?? '—' }}</td>
+            <td class="px-4 py-3 font-mono text-sm">{{ $tag->kode_tag }}</td>
+            <td class="px-4 py-3">{{ $tag->item->nama_item ?? '—' }}</td>
+            <td class="px-4 py-3">{{ $tag->item->lokasi_pameran ?? '—' }}</td>
             <td class="px-4 py-3">
-              @if($t['status'] === 'Aktif')
+              @if($tag->item_id)
                 <span class="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded text-xs">● Aktif</span>
               @else
                 <span class="inline-flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">○ Belum dikaitkan</span>
@@ -64,19 +51,24 @@
             </td>
             <td class="px-4 py-3">
               <div class="flex justify-end gap-2 text-sm">
-                @if(!$t['item'])
+                @if(!$tag->item_id)
                   <button type="button" class="px-3 py-1.5 rounded-lg bg-mint/40 hover:bg-mint/60"
-                          @click="selectedTag={{ $t['id'] }}; openAssign=true">
+                          @click="selectedTag={{ $tag->id }}; openAssign=true">
                     Kaitkan
                   </button>
                 @else
                   <button type="button" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
-                          @click="selectedTag={{ $t['id'] }}; openAssign=true">
+                          @click="selectedTag={{ $tag->id }}; openAssign=true">
                     Edit
                   </button>
-                  <button type="button" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">
-                    Hapus
-                  </button>
+                  <form method="POST" action="{{ route('admin.nfc.destroy', $tag) }}" class="inline"
+                        onsubmit="return confirm('Hapus tag NFC ini?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">
+                      Hapus
+                    </button>
+                  </form>
                 @endif
               </div>
             </td>
@@ -88,6 +80,11 @@
         @endforelse
       </tbody>
     </table>
+  </div>
+
+  {{-- Pagination --}}
+  <div class="mt-4">
+    {{ $tags->links() }}
   </div>
 
   {{-- Notes --}}
@@ -113,20 +110,20 @@
         </div>
 
         {{-- Dummy form --}}
-        <form @submit.prevent="openAssign=false" class="grid grid-cols-1 gap-4">
+        <form method="POST" action="{{ route('admin.nfc.store') }}" class="grid grid-cols-1 gap-4">
           @csrf
           <div>
             <label class="text-sm font-medium">Kode Tag (UID)</label>
-            <input type="text" placeholder="Contoh: 04A2246B9C21"
+            <input type="text" name="kode_tag" placeholder="Contoh: 04A2246B9C21"
                    class="mt-1 w-full rounded-lg border-gray-200 font-mono text-sm" required>
           </div>
 
           <div>
             <label class="text-sm font-medium">Item yang Dikaitkan</label>
-            <select class="mt-1 w-full rounded-lg border-gray-200">
+            <select name="item_id" class="mt-1 w-full rounded-lg border-gray-200" required>
               <option value="">— Pilih item —</option>
-              @foreach($items as $i)
-                <option value="{{ $i['id'] }}">#{{ $i['id'] }} — {{ $i['nama'] }}</option>
+              @foreach($items as $item)
+                <option value="{{ $item->id }}">#{{ $item->id }} — {{ $item->nama_item }}</option>
               @endforeach
             </select>
           </div>
