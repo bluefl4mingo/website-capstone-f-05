@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateAudioRequest extends FormRequest
+class StoreNfcTagRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,8 @@ class UpdateAudioRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'item_id'  => ['required','exists:items,id'],
+        'kode_tag' => ['required','string','max:255','unique:nfc_tags,kode_tag'],
         ];
     }
 }

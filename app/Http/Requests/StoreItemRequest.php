@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreAudioRequest extends FormRequest
+class StoreItemRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +22,11 @@ class StoreAudioRequest extends FormRequest
     public function rules(): array
     {
         return [
-        'title'       => ['required','string','max:255'],
-        'description' => ['nullable','string'],
-        'category_id' => ['nullable','exists:categories,id'],
-        'file'        => ['required','file','mimetypes:audio/mpeg,audio/mp4,audio/wav,audio/x-wav,audio/x-ms-wma','max:25600'], // 25 MB
-    ];
+            'nama_item'        => ['required','string','max:255'],
+            'deskripsi'        => ['nullable','string'],
+            'kategori'         => ['nullable','string','max:100'],
+            'lokasi_pameran'   => ['nullable','string','max:100'],
+            'tanggal_penambahan' => ['nullable','date'],
+        ];
     }
 }
