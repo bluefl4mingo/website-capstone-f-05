@@ -60,7 +60,20 @@ return [
             'report' => false,
         ],
 
+         'gcs' => [
+        'driver' => 'gcs',
+        'key_file_path'   => env('GOOGLE_CLOUD_KEY_FILE', null), // opsional: /path/to/service-account.json
+        'key_file'        => [], // opsional: array kredensial sbg pengganti file .json
+        'project_id'      => env('GOOGLE_CLOUD_PROJECT_ID', 'your-project-id'), // opsional: bisa diambil dari JSON
+        'bucket'          => env('GOOGLE_CLOUD_STORAGE_BUCKET', 'your-bucket'),
+        'path_prefix'     => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX', ''), // opsional: prefix default
+        'storage_api_uri' => env('GOOGLE_CLOUD_STORAGE_API_URI', null),   // opsional: utk URL publik
+        'api_endpoint'    => env('GOOGLE_CLOUD_STORAGE_API_ENDPOINT', null), // opsional: endpoint client
+        'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class,
+        ],
     ],
+
+   
 
     /*
     |--------------------------------------------------------------------------
