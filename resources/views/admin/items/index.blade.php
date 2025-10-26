@@ -13,30 +13,94 @@
             <p class="text-sm text-gray-500">Kelola koleksi dan keterkaitannya (audio & NFC).</p>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-2 md:items-center">
-            <form method="GET" class="flex items-center gap-2">
-                <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama / deskripsi…" class="w-64 rounded-lg border-gray-200" />
-                <select name="category" class="rounded-lg border-gray-200">
+        <button @click="openCreate = true"
+                class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
+            + Item Baru
+        </button>
+    </div>
+
+    {{-- Filters Section --}}
+    <div class="rounded-2xl bg-white ring-1 ring-black/5 p-4">
+        <form method="GET" action="{{ route('admin.items.index') }}" class="flex flex-col md:flex-row gap-3 items-end" id="filterForm">
+            <div class="flex-1">
+                <label class="text-xs font-medium text-gray-600 uppercase">Cari</label>
+                <input type="text" 
+                       name="q" 
+                       value="{{ $q }}" 
+                       placeholder="Cari nama, deskripsi, kategori, atau lokasi…" 
+                       class="mt-1 w-full rounded-lg border-gray-200"
+                       autofocus />
+            </div>
+            
+            <div class="w-full md:w-48">
+                <label class="text-xs font-medium text-gray-600 uppercase">Kategori</label>
+                <select name="category" class="mt-1 w-full rounded-lg border-gray-200">
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $cat)
                         <option value="{{ $cat }}" @selected($category === $cat)>{{ $cat }}</option>
                     @endforeach
                 </select>
-                <select name="location" class="rounded-lg border-gray-200">
+            </div>
+            
+            <div class="w-full md:w-48">
+                <label class="text-xs font-medium text-gray-600 uppercase">Lokasi</label>
+                <select name="location" class="mt-1 w-full rounded-lg border-gray-200">
                     <option value="">Semua Lokasi</option>
                     @foreach($locations as $loc)
                         <option value="{{ $loc }}" @selected($location === $loc)>{{ $loc }}</option>
                     @endforeach
                 </select>
-                <button type="submit" class="px-3 py-2 rounded-lg border hover:bg-gray-50">Filter</button>
-            </form>
-
-            <button @click="openCreate = true"
-                    class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
-                + Item Baru
-            </button>
-        </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 rounded-lg bg-aqua text-white hover:opacity-90 whitespace-nowrap">
+                    Terapkan Filter
+                </button>
+                @if($q || $category || $location)
+                    <a href="{{ route('admin.items.index') }}" 
+                       class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap">
+                        Reset
+                    </a>
+                @endif
+            </div>
+        </form>
+        
+        @if($q || $category || $location)
+            <div class="mt-3 flex flex-wrap gap-2 items-center text-sm">
+                <span class="text-gray-600">Filter aktif:</span>
+                @if($q)
+                    <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                        Pencarian: "{{ $q }}"
+                        <a href="{{ route('admin.items.index', array_filter(['category' => $category, 'location' => $location])) }}" class="hover:text-blue-900">✕</a>
+                    </span>
+                @endif
+                @if($category)
+                    <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded">
+                        Kategori: {{ $category }}
+                        <a href="{{ route('admin.items.index', array_filter(['q' => $q, 'location' => $location])) }}" class="hover:text-green-900">✕</a>
+                    </span>
+                @endif
+                @if($location)
+                    <span class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                        Lokasi: {{ $location }}
+                        <a href="{{ route('admin.items.index', array_filter(['q' => $q, 'category' => $category])) }}" class="hover:text-purple-900">✕</a>
+                    </span>
+                @endif
+            </div>
+        @endif
     </div>
+
+    {{-- Results Summary --}}
+    @if($items->total() > 0)
+        <div class="flex items-center justify-between text-sm text-gray-600">
+            <div>
+                Menampilkan {{ $items->firstItem() }} - {{ $items->lastItem() }} dari {{ $items->total() }} items
+                @if($q || $category || $location)
+                    (terfilter)
+                @endif
+            </div>
+        </div>
+    @endif
 
     {{-- Table --}}
     <div class="rounded-2xl bg-white ring-1 ring-black/5 overflow-hidden">
@@ -81,8 +145,25 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-10 text-center text-gray-500">
-                        Belum ada data item.
+                    <td colspan="7" class="px-4 py-12 text-center">
+                        <div class="text-gray-400 mb-2">
+                            <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                        </div>
+                        @if($q || $category || $location)
+                            <p class="text-gray-600 font-medium">Tidak ada item yang sesuai dengan filter</p>
+                            <p class="text-sm text-gray-500 mt-1">Coba ubah atau reset filter untuk melihat lebih banyak data</p>
+                            <a href="{{ route('admin.items.index') }}" class="inline-block mt-3 px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50">
+                                Reset Filter
+                            </a>
+                        @else
+                            <p class="text-gray-600 font-medium">Belum ada data item</p>
+                            <p class="text-sm text-gray-500 mt-1">Mulai dengan menambahkan item baru</p>
+                            <button @click="openCreate = true" class="inline-block mt-3 px-4 py-2 rounded-lg bg-aqua text-white text-sm hover:opacity-90">
+                                + Tambah Item
+                            </button>
+                        @endif
                     </td>
                 </tr>
             @endforelse

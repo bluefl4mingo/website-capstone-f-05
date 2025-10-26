@@ -14,13 +14,23 @@ class ActivityLogController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->get('user', '');
-        $action = $request->get('action', '');
-        $from = $request->get('from', '');
-        $to = $request->get('to', '');
+        $search = trim((string) $request->get('search', ''));
+        $user = trim((string) $request->get('user', ''));
+        $action = trim((string) $request->get('action', ''));
+        $from = trim((string) $request->get('from', ''));
+        $to = trim((string) $request->get('to', ''));
 
         $logs = ActivityLog::query()
             ->with('user:id,name')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('aktivitas', 'like', "%{$search}%")
+                      ->orWhereHas('user', function ($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereRaw("CAST(context AS TEXT) LIKE ?", ["%{$search}%"]);
+                });
+            })
             ->when($user !== '', function ($query) use ($user) {
                 $query->where('user_id', $user);
             })
@@ -41,7 +51,11 @@ class ActivityLogController extends Controller
         $users = User::orderBy('name')->get(['id', 'name']);
 
         // Get available actions
-        $actions = ActivityLog::distinct()->pluck('aktivitas')->sort()->values();
+        $actions = ActivityLog::distinct()
+            ->pluck('aktivitas')
+            ->filter(fn($value) => !is_null($value) && $value !== '')
+            ->sort()
+            ->values();
 
         // KPIs for last 7 days
         $sevenDaysAgo = now()->subDays(7);
@@ -57,6 +71,7 @@ class ActivityLogController extends Controller
             'logs',
             'users',
             'actions',
+            'search',
             'user',
             'action',
             'from',
