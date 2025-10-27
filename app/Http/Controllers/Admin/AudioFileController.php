@@ -53,6 +53,9 @@ class AudioFileController extends Controller
             $ext = $file->guessExtension() ?: $file->getClientOriginalExtension();
             $blob = 'audios/' . Str::uuid() . '.' . $ext;
 
+            // Extract audio duration
+            $duration = $this->extractAudioDuration($file);
+
             // Upload to storage
             Storage::disk(config('filesystems.default'))->put($blob, file_get_contents($file->getRealPath()));
 
@@ -60,7 +63,7 @@ class AudioFileController extends Controller
                 'item_id' => $validated['item_id'],
                 'nama_file' => $validated['nama_file'],
                 'format_file' => $ext,
-                'durasi' => null, // Can be calculated later if needed
+                'durasi' => $duration,
                 'lokasi_penyimpanan' => $blob,
                 'tanggal_upload' => now(),
             ]);
@@ -73,6 +76,7 @@ class AudioFileController extends Controller
                     'audio_id' => $audio->id,
                     'item_id' => $audio->item_id,
                     'nama_file' => $audio->nama_file,
+                    'durasi' => $duration,
                 ],
             ]);
 
@@ -80,6 +84,29 @@ class AudioFileController extends Controller
                 ->route('admin.audio.index')
                 ->with('status', 'Audio berhasil diunggah.');
         });
+    }
+
+    /**
+     * Extract audio file duration using getID3 library
+     * 
+     * @param \Illuminate\Http\UploadedFile $file
+     * @return int|null Duration in seconds
+     */
+    private function extractAudioDuration($file): ?int
+    {
+        try {
+            $getID3 = new \getID3;
+            $fileInfo = $getID3->analyze($file->getRealPath());
+            
+            if (isset($fileInfo['playtime_seconds'])) {
+                return (int) round($fileInfo['playtime_seconds']);
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            \Log::warning('Failed to extract audio duration: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

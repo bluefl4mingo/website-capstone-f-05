@@ -16,14 +16,15 @@ class ItemController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-        $category = $request->get('category', '');
-        $location = $request->get('location', '');
+        $category = trim((string) $request->get('category', ''));
+        $location = trim((string) $request->get('location', ''));
 
         $items = Item::query()
             ->withCount(['audioFiles', 'nfcTags'])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($q2) use ($q) {
                     $q2->where('nama_item', 'like', "%{$q}%")
+                       ->orWhere('deskripsi', 'like', "%{$q}%")
                        ->orWhere('kategori', 'like', "%{$q}%")
                        ->orWhere('lokasi_pameran', 'like', "%{$q}%");
                 });
@@ -39,8 +40,17 @@ class ItemController extends Controller
             ->withQueryString();
 
         // Get unique categories and locations for filters
-        $categories = Item::distinct()->pluck('kategori')->filter()->sort()->values();
-        $locations = Item::distinct()->pluck('lokasi_pameran')->filter()->sort()->values();
+        $categories = Item::distinct()
+            ->pluck('kategori')
+            ->filter(fn($value) => !is_null($value) && $value !== '')
+            ->sort()
+            ->values();
+            
+        $locations = Item::distinct()
+            ->pluck('lokasi_pameran')
+            ->filter(fn($value) => !is_null($value) && $value !== '')
+            ->sort()
+            ->values();
 
         return view('admin.items.index', compact('items', 'q', 'category', 'location', 'categories', 'locations'));
     }
