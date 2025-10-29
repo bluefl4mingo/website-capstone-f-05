@@ -21,6 +21,10 @@ class ItemController extends Controller
 
         $items = Item::query()
             ->withCount(['audioFiles', 'nfcTags'])
+             ->with([
+            'audioFiles:id,item_id,nama_file,format_file,lokasi_penyimpanan,created_at',
+            'nfcTags:id,item_id,kode_tag,created_at',
+             ])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($q2) use ($q) {
                     $q2->where('nama_item', 'like', "%{$q}%")
