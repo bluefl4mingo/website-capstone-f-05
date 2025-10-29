@@ -3,78 +3,174 @@
 @section('title','Dashboard')
 
 @section('content')
-  {{-- KPI cards --}}
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-    @php
-      $kpis = [
-        ['label' => 'Items',          'value' => 156,  'sub' => 'published', 'icon' => '⚱️'],
-        ['label' => 'Audio Tracks',   'value' => 142,  'sub' => 'Bahasa Indonesia', 'icon' => '🎧'],
-        ['label' => 'Devices Online', 'value' => 18,   'sub' => 'of 22 total', 'icon' => '📱'],
-        ['label' => 'Plays (7d)',     'value' => 3492, 'sub' => 'visitors listening', 'icon' => '▶️'],
-      ];
-    @endphp
-    @foreach ($kpis as $kpi)
-      <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5 flex items-center gap-4">
-        <div class="text-2xl">{{ $kpi['icon'] }}</div>
-        <div>
-          <div class="text-2xl font-semibold">{{ number_format($kpi['value']) }}</div>
-          <div class="text-sm text-gray-500">{{ $kpi['label'] }}</div>
-          <div class="text-xs text-gray-400">{{ $kpi['sub'] }}</div>
-        </div>
-      </div>
-    @endforeach
+@php
+  use App\Models\Item;
+  use App\Models\AudioFile;
+  use App\Models\NfcTag;
+  use Illuminate\Support\Facades\DB;
+
+  // --- KPIs ---
+  $totalItems      = Item::count();
+  $totalAudio      = AudioFile::count();
+
+  // --- Coverage (how many items already have…) ---
+  $itemsWithAudio  = Item::has('audioFiles')->count();
+  $itemsWithNfc    = Item::has('nfcTags')->count();
+
+  $pctAudio = $totalItems ? round(($itemsWithAudio / $totalItems) * 100) : 0;
+  $pctNfc   = $totalItems ? round(($itemsWithNfc   / $totalItems) * 100) : 0;
+
+  // --- Completeness (gaps to fix) ---
+  $itemsNoAudio = $totalItems - $itemsWithAudio;
+  $itemsNoNfc   = $totalItems - $itemsWithNfc;
+
+  // --- Recent activity (not realtime; just latest records) ---
+  $recentItems = Item::latest('created_at')->take(5)->get(['id','nama_item','kategori','lokasi_pameran','created_at']);
+  $recentAudio = AudioFile::with('item:id,nama_item')
+                  ->latest('created_at')
+                  ->take(5)
+                  ->get(['id','item_id','nama_file','format_file','durasi','created_at']);
+
+  // --- Breakdown by category (top 6) ---
+  $byCategory = Item::select('kategori', DB::raw('COUNT(*) as total'))
+                  ->groupBy('kategori')
+                  ->orderByDesc('total')
+                  ->take(6)
+                  ->get();
+@endphp
+
+{{-- KPI tiles --}}
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  {{-- Items --}}
+  <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5 flex items-center gap-4">
+    <div class="text-2xl">⚱️</div>
+    <div>
+      <div class="text-2xl font-semibold">{{ number_format($totalItems) }}</div>
+      <div class="text-sm text-gray-500">Items</div>
+      <div class="text-xs text-gray-400">total koleksi</div>
+    </div>
   </div>
 
-  {{-- Charts & tables --}}
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
-    {{-- Line chart --}}
-    <div class="xl:col-span-2 rounded-2xl bg-white ring-1 ring-black/5 p-5">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="font-semibold">Plays per Day (last 14 days)</h2>
-        <span class="text-xs text-gray-500">dummy data</span>
+  {{-- Audio Tracks --}}
+  <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5 flex items-center gap-4">
+    <div class="text-2xl">🎧</div>
+    <div>
+      <div class="text-2xl font-semibold">{{ number_format($totalAudio) }}</div>
+      <div class="text-sm text-gray-500">Audio Tracks</div>
+      <div class="text-xs text-gray-400">semua bahasa</div>
+    </div>
+  </div>
+
+  {{-- Coverage: Items w/ Audio --}}
+  <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+    <div class="text-sm text-gray-500 mb-1">Cakupan Audio</div>
+    <div class="flex items-end justify-between">
+      <div class="text-2xl font-semibold">{{ $pctAudio }}%</div>
+      <div class="text-xs text-gray-400">{{ $itemsWithAudio }} dari {{ $totalItems }}</div>
+    </div>
+    <div class="mt-2 w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-2 bg-[#89BBB0]" style="width: {{ $pctAudio }}%"></div>
+    </div>
+  </div>
+
+  {{-- Coverage: Items w/ NFC --}}
+  <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+    <div class="text-sm text-gray-500 mb-1">Cakupan NFC</div>
+    <div class="flex items-end justify-between">
+      <div class="text-2xl font-semibold">{{ $pctNfc }}%</div>
+      <div class="text-xs text-gray-400">{{ $itemsWithNfc }} dari {{ $totalItems }}</div>
+    </div>
+    <div class="mt-2 w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-2 bg-[#89BBB0]" style="width: {{ $pctNfc }}%"></div>
+    </div>
+  </div>
+</div>
+
+{{-- Overview panels (no realtime) --}}
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+  {{-- Recently Added --}}
+  <div class="xl:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {{-- Recent Items --}}
+    <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+      <h2 class="font-semibold mb-3">Item Terbaru</h2>
+      <ul class="divide-y text-sm">
+        @forelse($recentItems as $it)
+          <li class="py-2">
+            <div class="font-medium">{{ $it->nama_item }}</div>
+            <div class="text-xs text-gray-500">
+              {{ $it->kategori ?? '—' }} • {{ $it->lokasi_pameran ?? '—' }} •
+              {{ optional($it->created_at)->format('Y-m-d H:i') }}
+            </div>
+          </li>
+        @empty
+          <li class="py-2 text-gray-500">Belum ada item.</li>
+        @endforelse
+      </ul>
+      <div class="mt-3 text-right">
+        <a href="{{ route('admin.items.index') }}" class="text-sm underline text-aqua hover:text-ink">Kelola Items</a>
       </div>
-      <canvas id="playsChart" height="80"></canvas>
     </div>
 
-    {{-- Top items table --}}
+    {{-- Recent Audio Uploads --}}
     <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
-      <h2 class="font-semibold mb-3">Most Played Items</h2>
+      <h2 class="font-semibold mb-3">Audio Terbaru</h2>
+      <ul class="divide-y text-sm">
+        @forelse($recentAudio as $af)
+          <li class="py-2">
+            <div class="font-medium">{{ $af->nama_file }}</div>
+            <div class="text-xs text-gray-500">
+              #{{ $af->item_id }} — {{ $af->item->nama_item ?? 'N/A' }}
+              • {{ strtoupper($af->format_file) }}
+              • {{ $af->durasi ? gmdate('i:s', $af->durasi) : '—' }}
+              • {{ optional($af->created_at)->format('Y-m-d H:i') }}
+            </div>
+          </li>
+        @empty
+          <li class="py-2 text-gray-500">Belum ada unggahan audio.</li>
+        @endforelse
+      </ul>
+      <div class="mt-3 text-right">
+        <a href="{{ route('admin.audio.index') }}" class="text-sm underline text-aqua hover:text-ink">Kelola Audio</a>
+      </div>
+    </div>
+  </div>
+
+  {{-- Right column: Completeness + Breakdown + Quick Actions --}}
+  <div class="space-y-6">
+    {{-- Data completeness --}}
+    <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+      <h2 class="font-semibold mb-3">Kelengkapan Data</h2>
+      <ul class="text-sm space-y-2">
+        <li class="flex items-center justify-between">
+          <span>Item tanpa audio</span>
+          <span class="font-semibold">{{ $itemsNoAudio }}</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <span>Item tanpa NFC tag</span>
+          <span class="font-semibold">{{ $itemsNoNfc }}</span>
+        </li>
+      </ul>
+      <div class="mt-3 grid grid-cols-2 gap-2">
+        <a href="{{ route('admin.audio.index') }}" class="rounded-lg border px-3 py-2 text-center text-aqua hover:bg-gray-50 text-sm">Tambah Audio</a>
+        <a href="{{ route('admin.nfc.index') }}"   class="rounded-lg border px-3 py-2 text-center text-aqua hover:bg-gray-50 text-sm">Set NFC</a>
+      </div>
+    </div>
+
+    {{-- Category breakdown --}}
+    <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+      <h2 class="font-semibold mb-3">Ringkasan Kategori</h2>
       <table class="w-full text-sm">
-        <thead class="text-gray-500">
-          <tr><th class="text-left py-2">Item</th><th class="text-right">7d Plays</th></tr>
-        </thead>
         <tbody class="divide-y">
-          @foreach ([
-            ['title'=>'Meriam VOC abad XIX','plays'=>412],
-            ['title'=>'Diorama Perang Diponegoro','plays'=>366],
-            ['title'=>'Patung Jenderal Sudirman','plays'=>305],
-            ['title'=>'Peta Hindia Belanda 1900','plays'=>298],
-          ] as $row)
+          @forelse($byCategory as $row)
             <tr>
-              <td class="py-2">{{ $row['title'] }}</td>
-              <td class="py-2 text-right font-medium">{{ $row['plays'] }}</td>
+              <td class="py-2">{{ $row->kategori ?: '—' }}</td>
+              <td class="py-2 text-right font-medium">{{ $row->total }}</td>
             </tr>
-          @endforeach
+          @empty
+            <tr><td class="py-2 text-gray-500">Belum ada data.</td></tr>
+          @endforelse
         </tbody>
       </table>
-    </div>
-
-    {{-- Recent device activity --}}
-    <div class="xl:col-span-2 rounded-2xl bg-white ring-1 ring-black/5 p-5">
-      <h2 class="font-semibold mb-3">Recent Device Activity</h2>
-      <ul class="text-sm divide-y">
-        @foreach ([
-          ['device'=>'Handset-021','event'=>'Synced 23 items','time'=>'2m ago'],
-          ['device'=>'Kiosk-Lobby','event'=>'Online, battery 82%','time'=>'12m ago'],
-          ['device'=>'Handset-014','event'=>'Updated app v1.3.2','time'=>'35m ago'],
-          ['device'=>'Handset-009','event'=>'Low battery (15%)','time'=>'1h ago'],
-        ] as $log)
-          <li class="py-2 flex items-center justify-between">
-            <span>{{ $log['device'] }} — {{ $log['event'] }}</span>
-            <span class="text-gray-500">{{ $log['time'] }}</span>
-          </li>
-        @endforeach
-      </ul>
     </div>
 
     {{-- Quick actions --}}
@@ -86,20 +182,5 @@
       </div>
     </div>
   </div>
-
-  {{-- Chart.js (simple, local) --}}
-  @push('scripts')
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const ctx = document.getElementById('playsChart').getContext('2d');
-    const labels = [...Array(14).keys()].map(i => new Date(Date.now()- (13-i)*864e5)
-                             .toLocaleDateString('id-ID',{day:'2-digit',month:'short'}));
-    const data = [180,210,240,205,260,275,310,290,320,335,360,370,395,410];
-    new Chart(ctx,{
-      type:'line',
-      data:{ labels, datasets:[{ label:'Plays', data, fill:false, tension:.35 }]},
-      options:{ plugins:{ legend:{ display:false }}, scales:{ y:{ beginAtZero:true } } }
-    });
-  </script>
-  @endpush
+</div>
 @endsection
