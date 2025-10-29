@@ -7,6 +7,8 @@
 <section
   x-data="{
     openUpload:false,
+    uploading: false,
+    uploadProgress: 0,
     // form state (prototype only)
     form: { item_id: {{ $selectedItemId ?: 'null' }}, lang: 'id', file: null, notes: '' },
     pick(itemId){ this.form.item_id = itemId; this.openUpload = true; }
@@ -134,8 +136,25 @@
           <button type="button" class="p-2 rounded hover:bg-gray-100" @click="openUpload=false">✕</button>
         </div>
 
+        {{-- Progress bar --}}
+        <div x-show="uploading" x-cloak class="mb-4">
+          <div class="flex items-center justify-between text-sm mb-2">
+            <span class="font-medium text-gray-700">Uploading...</span>
+            <span class="text-gray-600" x-text="`${uploadProgress}%`"></span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-aqua h-2.5 rounded-full transition-all duration-300" 
+                 :style="`width: ${uploadProgress}%`"></div>
+          </div>
+        </div>
+
         {{-- Prototype form: prevent submit, no backend yet --}}
-        <form method="POST" action="{{ route('admin.audio.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4">
+        <form method="POST" action="{{ route('admin.audio.store') }}" enctype="multipart/form-data" 
+              class="grid grid-cols-1 gap-4"
+              @submit="uploading = true; uploadProgress = 0; 
+                       let interval = setInterval(() => { 
+                         if(uploadProgress < 95) uploadProgress += 5; 
+                       }, 160);">
           @csrf
 
           <div>
@@ -163,8 +182,14 @@
           <div class="mt-6 flex items-center justify-between">
             <p class="text-xs text-gray-500">Setelah tersimpan, perangkat akan menandai item sebagai <em>Perlu Sync</em> hingga berhasil sinkron.</p>
             <div class="flex gap-2">
-              <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openUpload=false">Batal</button>
-              <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90">Upload</button>
+              <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" 
+                      @click="openUpload=false; uploading=false; uploadProgress=0"
+                      :disabled="uploading">Batal</button>
+              <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="uploading">
+                <span x-show="!uploading">Upload</span>
+                <span x-show="uploading">Uploading...</span>
+              </button>
             </div>
           </div>
         </form>
