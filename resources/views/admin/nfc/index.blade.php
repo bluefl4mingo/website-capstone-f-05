@@ -4,6 +4,7 @@
 @section('page-title','NFC Tags')
 
 @section('content')
+
 <section x-data="{ openAssign:false, selectedTag:null }" x-cloak class="space-y-4">
   {{-- Top bar --}}
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -57,8 +58,14 @@
                     Kaitkan
                   </button>
                 @else
-                  <button type="button" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
-                          @click="selectedTag={{ $tag->id }}; openAssign=true">
+                  <button type="button" 
+                          class="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
+                          @click="selectedTag = {
+                              id: {{ $tag->id }},
+                              kode_tag: '{{ $tag->kode_tag }}',
+                              item_id: {{ $tag->item_id }}
+                          }; 
+                          openAssign = true">
                     Edit
                   </button>
                   <form method="POST" action="{{ route('admin.nfc.destroy', $tag) }}" class="inline"
@@ -110,28 +117,50 @@
         </div>
 
         {{-- Dummy form --}}
-        <form method="POST" action="{{ route('admin.nfc.store') }}" class="grid grid-cols-1 gap-4">
-          @csrf
-          <div>
-            <label class="text-sm font-medium">Kode Tag (UID)</label>
-            <input type="text" name="kode_tag" placeholder="Contoh: 04A2246B9C21"
-                   class="mt-1 w-full rounded-lg border-gray-200 font-mono text-sm" required>
-          </div>
+        <form x-bind:action="selectedTag 
+        ? `{{ url('/admin/nfc-tags') }}/${selectedTag.id}`
+        : '{{ route('admin.nfc.store') }}'"
+              method="POST" 
+              class="grid grid-cols-1 gap-4">
+            @csrf
+            <template x-if="selectedTag">
+                @method('PATCH')
+            </template>
 
-          <div>
-            <label class="text-sm font-medium">Item yang Dikaitkan</label>
-            <select name="item_id" class="mt-1 w-full rounded-lg border-gray-200" required>
-              <option value="">— Pilih item —</option>
-              @foreach($items as $item)
-                <option value="{{ $item->id }}">#{{ $item->id }} — {{ $item->nama_item }}</option>
-              @endforeach
-            </select>
-          </div>
+            <div>
+                <label class="text-sm font-medium">Kode Tag (UID)</label>
+                <input type="text" 
+                      name="kode_tag" 
+                      placeholder="Contoh: 04A2246B9C21"
+                      x-bind:value="selectedTag ? selectedTag.kode_tag : ''"
+                      class="mt-1 w-full rounded-lg border-gray-200 font-mono text-sm" 
+                      required>
+            </div>
 
-          <div class="mt-6 flex justify-end gap-2">
-            <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openAssign=false">Batal</button>
-            <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90">Simpan</button>
-          </div>
+            <div>
+                <label class="text-sm font-medium">Item yang Dikaitkan</label>
+                <select name="item_id" 
+                        class="mt-1 w-full rounded-lg border-gray-200" 
+                        required>
+                    <option value="">— Pilih item —</option>
+                    @foreach($items as $item)
+                        <option value="{{ $item->id }}"
+                                x-bind:selected="selectedTag && selectedTag.item_id == {{ $item->id }}">
+                            #{{ $item->id }} — {{ $item->nama_item }}
+                        </option>                </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+                <button type="button"     
+                        class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" 
+                        @click="openAssign=false">Batal
+                </button>
+                <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90">
+                    Simpan
+                </button>
+            </div>
         </form>
       </div>
     </div>

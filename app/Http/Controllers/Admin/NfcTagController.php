@@ -36,27 +36,33 @@ class NfcTagController extends Controller
         return view('admin.nfc.index', compact('tags', 'q', 'items'));
     }
 
-    /**
-     * Store a newly created resource in storage.
+     /**
+     * Store a newly created NFC tag.
+     * UI should only hit this when the item does NOT already have a tag.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'item_id' => ['required', 'exists:items,id'],
+            'item_id'  => ['required', 'exists:items,id'],
             'kode_tag' => ['required', 'string', 'max:255', 'unique:nfc_tags,kode_tag'],
         ]);
+
+        // OPTIONAL: block if the item already has a tag (keeps one-to-one)
+        if (NfcTag::where('item_id', $validated['item_id'])->exists()) {
+            return back()->withErrors(['item_id' => 'Item tersebut sudah memiliki NFC Tag.'])->withInput();
+        }
 
         return DB::transaction(function () use ($validated) {
             $tag = NfcTag::create($validated);
 
             ActivityLog::create([
-                'user_id' => auth()->id(),
-                'aktivitas' => 'create_nfc_tag',
+                'user_id'         => auth()->id(),
+                'aktivitas'       => 'create_nfc_tag',
                 'waktu_aktivitas' => now(),
-                'context' => [
+                'context'         => [
                     'nfc_tag_id' => $tag->id,
-                    'item_id' => $tag->item_id,
-                    'kode_tag' => $tag->kode_tag,
+                    'item_id'    => $tag->item_id,
+                    'kode_tag'   => $tag->kode_tag,
                 ],
             ]);
 
@@ -67,28 +73,56 @@ class NfcTagController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Explicit update flow for a specific tag record.
+     * Keeps uniqueness on kode_tag and lets you reassign tag to a different item if needed.
      */
     public function update(Request $request, NfcTag $nfcTag)
     {
         $validated = $request->validate([
-            'item_id' => ['required', 'exists:items,id'],
-            'kode_tag' => ['required', 'string', 'max:255', Rule::unique('nfc_tags', 'kode_tag')->ignore($nfcTag->id)],
+            'item_id'  => ['required', 'exists:items,id'],
+            'kode_tag' => [
+                'required', 'string', 'max:255',
+                Rule::unique('nfc_tags', 'kode_tag')->ignore($nfcTag->id),
+            ],
         ]);
 
         return DB::transaction(function () use ($nfcTag, $validated) {
-            $nfcTag->update($validated);
+            $old = [
+                'item_id'  => $nfcTag->item_id,
+                'kode_tag' => $nfcTag->kode_tag,
+            ];
 
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'aktivitas' => 'update_nfc_tag',
-                'waktu_aktivitas' => now(),
-                'context' => [
-                    'nfc_tag_id' => $nfcTag->id,
-                    'kode_tag' => $nfcTag->kode_tag,
-                ],
+            // If you want to enforce "one tag per item" strictly here too:
+            // If moving this tag to an item that *already has another tag*, you might want to block:
+            $conflict = NfcTag::where('item_id', $validated['item_id'])
+                ->where('id', '!=', $nfcTag->id)
+                ->first();
+
+            if ($conflict) {
+                return back()
+                    ->withErrors(['item_id' => 'Item tersebut sudah memiliki NFC Tag lain.'])
+                    ->withInput();
+            }
+
+            $nfcTag->update([
+                'item_id'  => $validated['item_id'],
+                'kode_tag' => $validated['kode_tag'],
             ]);
 
+           ActivityLog::create([
+                'user_id'         => auth()->id(),
+                'aktivitas'       => 'update_nfc_tag',
+                'waktu_aktivitas' => now(),
+                'context'         => [
+                    'nfc_tag_id'    => $nfcTag->id,
+                    'old_item_id'   => $old['item_id'],
+                    'new_item_id'   => $validated['item_id'],
+                    'old_kode_tag'  => $old['kode_tag'],
+                    'new_kode_tag'  => $validated['kode_tag'],
+                    'kode_tag'      => $validated['kode_tag'],   
+                ],
+            ]);
+            
             return redirect()
                 ->route('admin.nfc.index')
                 ->with('status', 'NFC Tag berhasil diperbarui.');
