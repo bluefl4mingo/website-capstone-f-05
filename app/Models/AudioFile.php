@@ -13,11 +13,30 @@ class AudioFile extends Model
         'durasi',
         'lokasi_penyimpanan',
         'tanggal_upload',
+
+        'sync_status',
+        'sync_version',
+        'last_synced_at',
+        'checksum',
     ];
 
     protected $casts = [
         'tanggal_upload' => 'datetime',
+        'last_synced_at' => 'datetime',
+        'sync_version' => 'integer',
     ];
+
+    protected $appends = ['sync_badge'];
+
+    public function getSyncBadgeAttribute(): array
+    {
+        return match ($this->sync_status) {
+            'synced'      => ['label' => '✔ Sinkron',     'class' => 'text-green-700 bg-green-50'],
+            'in_progress' => ['label' => '↻ Menyinkron',  'class' => 'text-blue-700 bg-blue-50'],
+            'failed'      => ['label' => '✖ Gagal',       'class' => 'text-rose-700 bg-rose-50'],
+            default       => ['label' => '• Perlu Sync',  'class' => 'text-amber-800 bg-amber-50'],
+        };
+    }
 
     public function item()
     {
