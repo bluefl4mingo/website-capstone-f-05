@@ -50,14 +50,21 @@ class AudioFileController extends Controller
             'file'      => ['required', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:10240'],
         ]);
 
-        return DB::transaction(function () use ($request, $validated) {
+        if (AudioFile::where('item_id', $validated['item_id'])->exists()) {
+            return back()
+                ->withErrors(['item_id' => 'Item tersebut sudah memiliki audio. Silakan gunakan aksi "Ganti" pada audio yang ada.'])
+                ->withInput();
+        }
+
+        $disk = 'gcs';
+        return DB::transaction(function () use ($request, $validated, $disk) {
             $file = $request->file('file');
             $ext  = $file->guessExtension() ?: $file->getClientOriginalExtension();
             $blob = 'audios/' . Str::uuid() . '.' . $ext;
 
             $duration = $this->extractAudioDuration($file);
 
-            Storage::disk(config('filesystems.default'))->put($blob, file_get_contents($file->getRealPath()));
+            Storage::disk($disk)->put($blob, file_get_contents($file->getRealPath()));
 
             $audio = AudioFile::create([
                 'item_id'            => $validated['item_id'],
@@ -66,6 +73,8 @@ class AudioFileController extends Controller
                 'durasi'             => $duration,
                 'lokasi_penyimpanan' => $blob,
                 'tanggal_upload'     => now(),
+                'sync_status'        => 'pending', 
+                'sync_version'       => 1,
             ]);
 
             ActivityLog::create([
@@ -120,6 +129,18 @@ class AudioFileController extends Controller
             'item_id'   => ['required', 'exists:items,id'],
             'file'      => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:10240'],
         ]);
+
+        if ((int)$validated['item_id'] !== (int)$audioFile->item_id) {
+            $conflict = AudioFile::where('item_id', $validated['item_id'])
+                ->where('id', '!=', $audioFile->id)
+                ->exists();
+
+            if ($conflict) {
+                return back()
+                    ->withErrors(['item_id' => 'Item tersebut sudah memiliki audio lain.'])
+                    ->withInput();
+            }
+        }
 
         $disk = 'gcs';
         $oldPath = $audioFile->lokasi_penyimpanan;

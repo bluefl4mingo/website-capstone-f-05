@@ -7,11 +7,28 @@
 <section
   x-data="{
     openUpload:false,
+    isEdit:false,          
+    editId:null,
+
+    form: { item_id: {{ $selectedItemId ?: 'null' }}, file: null, nama_file: '' },
     uploading: false,
     uploadProgress: 0,
-    // form state (prototype only)
-    form: { item_id: {{ $selectedItemId ?: 'null' }}, lang: 'id', file: null, notes: '' },
-    pick(itemId){ this.form.item_id = itemId; this.openUpload = true; }
+
+    // open for NEW upload
+    openNew(){
+      this.isEdit=false;
+      this.editId=null;
+      this.form = { item_id: {{ $selectedItemId ?: 'null' }}, file: null, nama_file: '' };
+      this.openUpload = true;
+    },
+
+    // open for REPLACE an existing audio
+    openReplace(id, itemId, nama){
+      this.isEdit=true;
+      this.editId=id;
+      this.form = { item_id: itemId, file: null, nama_file: nama };
+      this.openUpload = true;
+    }
   }"
   x-cloak
   class="space-y-5"
@@ -20,7 +37,7 @@
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
     <div class="flex-1">
       <h1 class="text-xl font-semibold">Audio Files</h1>
-      <p class="text-sm text-gray-500">Kelola berkas audio yang terhubung ke setiap item. (Prototipe: 1 audio per item, bahasa <em>ID</em>.)</p>
+      <p class="text-sm text-gray-500">Kelola berkas audio yang terhubung ke setiap item.</p>
     </div>
 
     <div class="flex flex-col md:flex-row gap-2 md:items-center">
@@ -35,14 +52,14 @@
               </option>
             @endforeach
           </select>
-          <button type="submit" class="px-3 py-2 rounded-lg border hover:bg-gray-50">Terapkan</button>
+          <button type="submit" class="px-3 py-2 rounded-lg border hover:bg-aqua/20">Terapkan</button>
         </form>
       </div>
 
       <button type="button"
-              @click="openUpload = true"
+              @click="openNew()"  
               class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
-        + Upload / Ganti Audio
+        + Upload Audio
       </button>
     </div>
   </div>
@@ -52,21 +69,21 @@
     <table class="w-full">
       <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
         <tr>
-          <th class="text-left px-4 py-3">Item</th>
-          <th class="text-left px-4 py-3">Kategori / Lokasi</th>
-          <th class="text-left px-4 py-3">Filename</th>
-          <th class="text-left px-4 py-3">Lang</th>
-          <th class="text-left px-4 py-3">Durasi</th>
-          <th class="text-left px-4 py-3">Storage</th>
-          <th class="text-left px-4 py-3">Update</th>
-          <th class="text-left px-4 py-3">Sync</th>
-          <th class="text-right px-4 py-3">Aksi</th>
+          <th class="text-center px-4 py-3 min-w-[300px]">Item</th>
+          <th class="text-center px-4 py-3">Kategori / Lokasi</th>
+          <th class="text-center px-4 py-3">Filename</th>
+          <th class="text-center px-4 py-3">Lang</th>
+          <th class="text-center px-4 py-3">Durasi</th>
+          <th class="text-center px-4 py-3">Storage</th>
+          <th class="text-center px-4 py-3">Update</th>
+          <th class="text-center px-4 py-3 min-w-[150px]">Sync</th>
+          <th class="text-center px-4 py-3">Aksi</th>
         </tr>
       </thead>
       <tbody class="divide-y">
         @forelse($audioFiles as $audio)
           <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3">
+            <td class="px-4 py-3 min-w-[300px]">
               <div class="font-medium">#{{ $audio->item_id }} — {{ $audio->item->nama_item ?? 'N/A' }}</div>
             </td>
             <td class="px-4 py-3">
@@ -80,15 +97,27 @@
             <td class="px-4 py-3">
               {{ $audio->updated_at ? $audio->updated_at->format('Y-m-d H:i') : '—' }}
             </td>
-            <td class="px-4 py-3">
-              <span class="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded">✔ Sinkron</span>
+            <td class="px-4 py-3 min-w-[150px] text-center">
+              @php $status = $audio->sync_status ?? 'synced'; @endphp
+              @if($status === 'pending')
+                <span class="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-1 rounded">⏳Perlu Sync</span>
+              @elseif($status === 'failed')
+                <span class="inline-flex items-center gap-1 text-rose-700 bg-rose-50 px-2 py-1 rounded">⚠️ Gagal Sync</span>
+              @else
+                <span class="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded">✔ Sinkron</span>
+              @endif
             </td>
             <td class="px-4 py-3">
               <div class="flex justify-end gap-2 text-sm">
                 <button type="button"
-                        class="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
-                        @click="pick({{ $audio->item_id }})">Ganti</button>
-                <button type="button" class="px-3 py-1.5 rounded-lg border hover:bg-gray-50">Unduh</button>
+                  class="px-3 py-1.5 rounded-lg border hover:bg-mist/10"
+                    @click="openReplace({{ $audio->id }}, {{ $audio->item_id }}, @js($audio->nama_file))">
+                    Ganti
+                </button>
+                <a href="{{ route('admin.audio.download', $audio) }}" 
+                   class="px-3 py-1.5 rounded-lg border hover:bg-aqua/10">
+                    Unduh
+                </a>
                 <form method="POST" action="{{ route('admin.audio.destroy', $audio) }}" class="inline" 
                       onsubmit="return confirm('Hapus audio ini?')">
                   @csrf
@@ -116,10 +145,10 @@
 
   {{-- Notes / Help --}}
   <div class="text-xs text-gray-500">
-    <p>Catatan: prototipe ini menganggap 1 audio per item (bahasa: <strong>ID</strong>). Untuk pengembangan lanjut (multi-bahasa), kolom <em>lang</em> akan menjadi kunci tambahan (unique: item_id+lang) dan UI menambah dropdown bahasa & multi-record per item.</p>
+    <p>Catatan: Prototipe ini menerapkan 1 audio per item.</p>
   </div>
 
-  {{-- =============== Upload / Replace Modal (prototype only) =============== --}}
+  {{-- =============== Create / Replace Modal =============== --}}
   <template x-teleport="body">
     <div x-show="openUpload"
          x-transition.opacity
@@ -132,11 +161,11 @@
            class="relative mt-20 w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5"
            role="dialog" aria-modal="true">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Upload / Ganti Audio</h3>
+          <h3 class="text-lg font-semibold" x-text="isEdit ? 'Ganti Audio' : 'Upload Audio'"></h3>
           <button type="button" class="p-2 rounded hover:bg-gray-100" @click="openUpload=false">✕</button>
         </div>
 
-        {{-- Progress bar --}}
+         {{-- Progress bar --}}
         <div x-show="uploading" x-cloak class="mb-4">
           <div class="flex items-center justify-between text-sm mb-2">
             <span class="font-medium text-gray-700">Uploading...</span>
@@ -148,44 +177,81 @@
           </div>
         </div>
 
-        {{-- Prototype form: prevent submit, no backend yet --}}
-        <form method="POST" action="{{ route('admin.audio.store') }}" enctype="multipart/form-data" 
-              class="grid grid-cols-1 gap-4"
-              @submit="uploading = true; uploadProgress = 0; 
-                       let interval = setInterval(() => { 
-                         if(uploadProgress < 95) uploadProgress += 5; 
-                       }, 160);">
+        {{-- ONE form that switches action/method dynamically --}}
+        <form
+          method="POST"
+          enctype="multipart/form-data"
+          :action="isEdit
+            ? '{{ url('/admin/audio') }}/' + editId      // PATCH /admin/audio/{id}
+            : '{{ route('admin.audio.store') }}'         // POST  /admin/audio
+          "
+          class="grid grid-cols-1 gap-4"
+          @submit="
+            uploading = true;
+            uploadProgress = 0;
+            // simple simulated progress like the prototype
+            let __pb = setInterval(() => {
+              if (uploadProgress < 95) uploadProgress += 5;
+            }, 160);
+          "
+        >
           @csrf
+          {{-- spoof PATCH only on edit --}}
+          <template x-if="isEdit">
+            <input type="hidden" name="_method" value="PATCH">
+          </template>
 
           <div>
-            <label class="text-sm font-medium">Item</label>
-            <select name="item_id" x-model="form.item_id" class="mt-1 w-full rounded-lg border-gray-200" required>
+            <label for="audio_item_id" class="text-sm font-medium">Item</label>
+            <select id="audio_item_id" name="item_id"
+                    x-model="form.item_id"
+                    class="mt-1 w-full rounded-lg border-gray-200" 
+                    :disabled="isEdit"
+                    required>
               <option value="" disabled>Pilih item…</option>
               @foreach($items as $item)
-                <option value="{{ $item->id }}">#{{ $item->id }} — {{ $item->nama_item }}</option>
+                <option value="{{ $item->id }}"
+                  x-show="isEdit || {{ $item->audio_files_count === 0 ? 'true' : 'false' }}"
+                  :disabled="!isEdit && {{ $item->audio_files_count > 0 ? 'true' : 'false' }}"
+                >
+                  #{{ $item->id }} — {{ $item->nama_item }}
+                  @if($item->audio_files_count > 0 && false) (sudah ada audio) @endif
+                </option>
               @endforeach
             </select>
           </div>
-
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="text-sm font-medium">Nama File</label>
-              <input type="text" name="nama_file" class="mt-1 w-full rounded-lg border-gray-200" required>
+              <label for="audio_nama_file" class="text-sm font-medium">Nama File</label>
+              <input id="audio_nama_file" type="text" name="nama_file"
+                    class="mt-1 w-full rounded-lg border-gray-200"
+                    x-model="form.nama_file" required>
             </div>
             <div>
-              <label class="text-sm font-medium">Berkas Audio (.mp3, .wav, .ogg, .m4a)</label>
-              <input type="file" name="file" accept=".wav,.mp3,.ogg,.m4a,audio/*" class="mt-1 w-full rounded-lg border-gray-200"
-                     @change="form.file = $event.target.files[0]" required>
+              <label for="audio_file" class="text-sm font-medium">
+                Berkas Audio (.mp3, .wav, .ogg, .m4a)
+                <span class="text-xs text-gray-500" x-show="isEdit">(opsional jika hanya ganti nama)</span>
+              </label>
+              <input id="audio_file" type="file" name="file"
+                    accept=".wav,.mp3,.ogg,.m4a,audio/*"
+                    class="mt-1 w-full border-gray-200"
+                    @change="form.file = $event.target.files[0]"
+                    :required="!isEdit">
             </div>
           </div>
 
           <div class="mt-6 flex items-center justify-between">
             <p class="text-xs text-gray-500">Setelah tersimpan, perangkat akan menandai item sebagai <em>Perlu Sync</em> hingga berhasil sinkron.</p>
             <div class="flex gap-2">
-              <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" 
+              <button type="button"
+                      class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200"
                       @click="openUpload=false; uploading=false; uploadProgress=0"
-                      :disabled="uploading">Batal</button>
-              <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="uploading">
+                Batal
+              </button>
+
+              <button type="submit"
+                      class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                       :disabled="uploading">
                 <span x-show="!uploading">Upload</span>
                 <span x-show="uploading">Uploading...</span>
