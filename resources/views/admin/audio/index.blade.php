@@ -219,6 +219,9 @@
                 </option>
               @endforeach
             </select>
+            <template x-if="isEdit">
+              <input type="hidden" name="item_id" x-bind:value="form.item_id">
+            </template>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
