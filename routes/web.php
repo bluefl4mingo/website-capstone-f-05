@@ -33,10 +33,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Audio files management
         Route::get('/audio', [AudioFileController::class, 'index'])->name('audio.index');
         Route::post('/audio', [AudioFileController::class, 'store'])->name('audio.store');
+        Route::get('/audio/{audioFile}/download', [AudioFileController::class, 'download'])->name('audio.download'); 
         Route::patch('/audio/{audioFile}', [AudioFileController::class, 'update'])->name('audio.update');
         Route::delete('/audio/{audioFile}', [AudioFileController::class, 'destroy'])->name('audio.destroy');
 
-        // NFC tags management
+        // NFC tags managementb  
         Route::get('/nfc-tags', [NfcTagController::class, 'index'])->name('nfc.index');
         Route::post('/nfc-tags', [NfcTagController::class, 'store'])->name('nfc.store');
         Route::patch('/nfc-tags/{nfcTag}', [NfcTagController::class, 'update'])->name('nfc.update');
