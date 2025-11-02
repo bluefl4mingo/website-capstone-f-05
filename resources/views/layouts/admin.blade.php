@@ -35,32 +35,48 @@
         {{-- NAV LINKS --}}
         <nav class="space-y-2 text-md text-aqua font-semibold">
           <a href="{{ route('admin.dashboard') }}"
-             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-mint/20">
+             class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                    {{ request()->routeIs('admin.dashboard') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
+            @if(request()->routeIs('admin.dashboard')) aria-current="page" @endif>
             <span>🏛</span><span>Dashboard</span>
           </a>
 
           <a href="{{ route('admin.items.index') }}"
-             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-mint/20">
+             class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                    {{ request()->routeIs('admin.items.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
+            @if(request()->routeIs('admin.items.*')) aria-current="page" @endif>
             <span>⚱️</span><span>Items</span>
           </a>
 
           <a href="{{ route('admin.audio.index') }}"
-             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-mint/20">
+             class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                    {{ request()->routeIs('admin.audio.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
+            @if(request()->routeIs('admin.audio.*')) aria-current="page" @endif>
             <span>🎧</span><span>Audio Files</span>
           </a>
 
           <a href="{{ route('admin.nfc.index') }}"
-             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-mint/20">
-            <span>🔖</span><span>NFC Tags</span>
+             class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                    {{ request()->routeIs('admin.nfc.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
+            @if(request()->routeIs('admin.nfc.*')) aria-current="page" @endif>
+            <span>
+              <img src="{{ asset('images/nfc.png') }}" alt="NFC Tags" class="h-5 w-5">
+            </span><span>NFC Tags</span>
           </a>
 
           <a href="{{ route('admin.devices.index') }}"
-             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-mint/20">
-            <span>📱</span><span>Devices</span>
+             class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                    {{ request()->routeIs('admin.devices.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
+            @if(request()->routeIs('admin.devices.*')) aria-current="page" @endif>
+            <span>
+              <img src="{{ asset('images/iot.png') }}" alt="Devices" class="h-8 w-5">
+            </span><span>Devices</span>
           </a>
 
           <a href="{{ route('admin.logs.index') }}"
-             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-mint/20">
+             class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                    {{ request()->routeIs('admin.logs.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
+            @if(request()->routeIs('admin.logs.*')) aria-current="page" @endif>
             <span>🕒</span><span>Activity Logs</span>
           </a>
         </nav>

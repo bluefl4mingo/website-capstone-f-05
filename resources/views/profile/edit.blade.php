@@ -96,7 +96,7 @@
   {{-- Danger zone (optional delete) --}}
   <section class="rounded-2xl bg-white ring-1 ring-black/5 p-6">
     <h3 class="font-semibold mb-3">Delete account</h3>
-    <p class="text-sm text-gray-600 mb-4">This action is irreversible.</p>
+    <p class="text-sm text-gray-600 mb-4">Aksi ini tidak dapat dibatalkan.</p>
 
     <form method="POST" action="{{ route('profile.destroy') }}" class="max-w-xl">
       @csrf
