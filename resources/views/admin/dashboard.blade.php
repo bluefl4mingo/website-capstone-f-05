@@ -151,8 +151,8 @@
         </li>
       </ul>
       <div class="mt-3 grid grid-cols-2 gap-2">
-        <a href="{{ route('admin.audio.index') }}" class="rounded-lg border px-3 py-2 text-center text-aqua hover:bg-gray-50 text-sm">Tambah Audio</a>
-        <a href="{{ route('admin.nfc.index') }}"   class="rounded-lg border px-3 py-2 text-center text-aqua hover:bg-gray-50 text-sm">Set NFC</a>
+        <a href="{{ route('admin.audio.index') }}" class="rounded-lg border px-3 py-2 text-center text-green-700 hover:bg-mint/50 text-sm">Tambah Audio</a>
+        <a href="{{ route('admin.nfc.index') }}"   class="rounded-lg border px-3 py-2 text-center text-green-700 hover:bg-mint/50 text-sm">Set NFC</a>
       </div>
     </div>
 
@@ -176,9 +176,10 @@
     {{-- Quick actions --}}
     <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
       <h2 class="font-semibold mb-3">Quick Actions</h2>
-      <div class="grid grid-cols-2 gap-3 text-sm">
-        <a href="{{ route('admin.items.index') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-aqua hover:bg-mint/70">New Item</a>
-        <a href="{{ route('admin.audio.index') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-aqua hover:bg-mint/70">Upload Audio</a>
+      <div class="grid grid-cols-3 gap-2">
+        <a href="{{ route('admin.items.index') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">New Item</a>
+        <a href="{{ route('admin.audio.index') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">Upload Audio</a>
+        <a href="{{ route('admin.export.nfc.mappings') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">Export Mapping</a>
       </div>
     </div>
   </div>
