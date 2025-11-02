@@ -139,17 +139,31 @@
 
             <div>
                 <label class="text-sm font-medium">Item yang Dikaitkan</label>
-                <select name="item_id" 
-                        class="mt-1 w-full rounded-lg border-gray-200" 
+                                <select name="item_id" 
+                        class="mt-1 w-full rounded-lg border-gray-200 disabled:bg-gray-100 disabled:text-gray-500" 
+                        :disabled="selectedTag"
                         required>
                     <option value="">— Pilih item —</option>
                     @foreach($items as $item)
                         <option value="{{ $item->id }}"
                                 x-bind:selected="selectedTag && selectedTag.item_id == {{ $item->id }}">
                             #{{ $item->id }} — {{ $item->nama_item }}
-                        </option>                </option>
+                        </option>
+                    @endforeach
+                    {{-- Show current item in edit mode --}}
+                    @foreach($tags as $tag)
+                        @if($tag->item && !$items->contains($tag->item_id))
+                            <template x-if="selectedTag && selectedTag.id == {{ $tag->id }}">
+                                <option value="{{ $tag->item_id }}" selected>
+                                    #{{ $tag->item_id }} — {{ $tag->item->nama_item }}
+                                </option>
+                            </template>
+                        @endif
                     @endforeach
                 </select>
+                <template x-if="selectedTag">
+                    <input type="hidden" name="item_id" x-bind:value="selectedTag.item_id">
+                </template>
             </div>
 
             <div class="mt-6 flex justify-end gap-2">

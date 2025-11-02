@@ -208,7 +208,7 @@
                     class="mt-1 w-full rounded-lg border-gray-200" 
                     :disabled="isEdit"
                     required>
-              <option value="" disabled>Pilih item…</option>
+              <option value="">— Pilih item —</option>
               @foreach($items as $item)
                 <option value="{{ $item->id }}"
                   x-show="isEdit || {{ $item->audio_files_count === 0 ? 'true' : 'false' }}"

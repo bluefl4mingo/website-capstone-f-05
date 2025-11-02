@@ -31,7 +31,9 @@ class NfcTagController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $items = Item::orderBy('nama_item')->get(['id', 'nama_item']);
+        $items = Item::orderBy('nama_item')
+            ->whereDoesntHave('nfcTags')
+            ->get(['id', 'nama_item']);
 
         return view('admin.nfc.index', compact('tags', 'q', 'items'));
     }
