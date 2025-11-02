@@ -10,7 +10,7 @@
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
     <div class="flex-1">
       <h1 class="text-xl font-semibold">Activity Logs</h1>
-      <p class="text-sm text-gray-500">Jejak aktivitas admin: siapa melakukan apa dan kapan.</p>
+      <p class="text-sm text-gray-500">Jejak aktivitas admin.</p>
     </div>
 
     <div class="flex flex-wrap gap-2 md:items-center">

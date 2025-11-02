@@ -107,9 +107,9 @@
         <table class="w-full">
             <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
-                <th class="text-center px-4 py-3">Nama Item</th>
+                <th class="text-center px-4 py-3 min-w-[300px]">Nama Item</th>
                 <th class="text-center px-4 py-3">Kategori</th>
-                <th class="text-center px-4 py-3">Lokasi</th>
+                <th class="text-center px-4 py-3 min-w-[120px]">Lokasi</th>
                 <th class="text-center px-4 py-3">Audio</th>
                 <th class="text-center px-4 py-3">NFC</th>
                 <th class="text-center px-4 py-3">Ditambahkan</th>
@@ -123,11 +123,11 @@
                         <div class="font-medium">{{ $item->nama_item }}</div>
                         <div class="text-sm text-gray-500 line-clamp-1">{{ $item->deskripsi }}</div>
                     </td>
-                    <td class="px-4 py-3">{{ $item->kategori ?? '—' }}</td>
-                    <td class="px-4 py-3">{{ $item->lokasi_pameran ?? '—' }}</td>
+                    <td class="px-4 py-3 text-center">{{ $item->kategori ?? '—' }}</td>
+                    <td class="px-4 py-3 text-center">{{ $item->lokasi_pameran ?? '—' }}</td>
                     <td class="px-4 py-3 text-center">{{ $item->audio_files_count }}</td>
                     <td class="px-4 py-3 text-center">{{ $item->nfc_tags_count }}</td>
-                    <td class="px-4 py-3">{{ $item->tanggal_penambahan ? \Carbon\Carbon::parse($item->tanggal_penambahan)->isoFormat('D MMM Y') : '—' }}</td>
+                    <td class="px-4 py-3 text-center">{{ $item->tanggal_penambahan ? \Carbon\Carbon::parse($item->tanggal_penambahan)->isoFormat('D MMM Y') : '—' }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-2">
                             {{-- Detail/Edit (placeholder) --}}
