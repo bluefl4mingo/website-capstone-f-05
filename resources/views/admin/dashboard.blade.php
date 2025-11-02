@@ -176,10 +176,24 @@
     {{-- Quick actions --}}
     <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
       <h2 class="font-semibold mb-3">Quick Actions</h2>
-      <div class="grid grid-cols-3 gap-2">
-        <a href="{{ route('admin.items.index') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">New Item</a>
-        <a href="{{ route('admin.audio.index') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">Upload Audio</a>
-        <a href="{{ route('admin.export.nfc.mappings') }}" class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">Export Mapping</a>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <a href="{{ route('admin.items.index') }}" 
+           class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">
+          ➕ New Item
+        </a>
+        <a href="{{ route('admin.audio.index') }}" 
+           class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">
+          🎵 Upload Audio
+        </a>
+        <a href="{{ route('admin.export.nfc.mappings') }}" 
+           class="rounded-xl bg-green-100 px-3 py-2 text-center text-green-700 hover:bg-green-200" download>
+          📥 Export Mapping
+        </a>
+        <a href="{{ route('admin.export.audio.all') }}" 
+           class="rounded-xl bg-blue-100 px-3 py-2 text-center text-blue-700 hover:bg-blue-200"
+           onclick="if(!confirm('Download semua audio sebagai ZIP? Ini mungkin memakan waktu.')) return false;">
+          📦 Download All
+        </a>
       </div>
     </div>
   </div>

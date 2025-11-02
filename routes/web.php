@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AudioFileController;
 use App\Http\Controllers\Admin\NfcTagController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DownloadController;
 use App\Http\Controllers\Api\NfcMappingController;
 
 Route::get('/', fn () => view('welcome'))->name('home');
@@ -57,9 +58,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Devices
         Route::view('/devices', 'admin.devices.index')->name('devices.index');
 
-        // NFC Mapping CSV Export (Web route, not API)
-        Route::get('/export/nfc-mappings', [NfcMappingController::class, 'exportCsv'])
-            ->name('export.nfc.mappings');
+        // Downloads & Exports
+        Route::get('/export/nfc-mappings', [NfcMappingController::class, 'exportCsv'])->name('export.nfc.mappings');
+        Route::get('/export/audio-all', [DownloadController::class, 'downloadAllAudio'])->name('export.audio.all');
+        Route::get('/export/audio-stats', [DownloadController::class, 'getDownloadStats'])->name('export.audio.stats');
     });
 });
 
