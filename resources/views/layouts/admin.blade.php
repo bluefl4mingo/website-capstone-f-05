@@ -22,7 +22,7 @@
       class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col justify-between
              transform transition-transform duration-200
              -translate-x-full lg:translate-x-0"
-      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+  :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
 
       {{-- top / nav --}}
       <div class="p-6">
@@ -45,7 +45,9 @@
              class="flex items-center gap-3 px-3 py-2 rounded-lg 
                     {{ request()->routeIs('admin.items.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
             @if(request()->routeIs('admin.items.*')) aria-current="page" @endif>
-            <span>⚱️</span><span>Items</span>
+            <span>
+              <img src="{{ asset('images/items.png') }}" alt="Items" class="h-6 w-6">
+            </span><span>Items</span>
           </a>
 
           <a href="{{ route('admin.audio.index') }}"
@@ -64,45 +66,63 @@
             </span><span>NFC Tags</span>
           </a>
 
-          <a href="{{ route('admin.devices.index') }}"
+          <!-- <a href="{{ route('admin.devices.index') }}"
              class="flex items-center gap-3 px-3 py-2 rounded-lg 
                     {{ request()->routeIs('admin.devices.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
             @if(request()->routeIs('admin.devices.*')) aria-current="page" @endif>
             <span>
               <img src="{{ asset('images/iot.png') }}" alt="Devices" class="h-8 w-5">
             </span><span>Devices</span>
-          </a>
+          </a> -->
 
           <a href="{{ route('admin.logs.index') }}"
              class="flex items-center gap-3 px-3 py-2 rounded-lg 
                     {{ request()->routeIs('admin.logs.*') ? 'bg-mint/20 text-aqua' : 'hover:bg-mint/20 text-ink' }}"
             @if(request()->routeIs('admin.logs.*')) aria-current="page" @endif>
-            <span>🕒</span><span>Activity Logs</span>
+            <span>
+              <img src="{{ asset('images/log.png') }}" alt="Activity Logs" class="h-5 w-5">
+            </span><span>Activity Logs</span>
           </a>
         </nav>
       </div>
 
-      {{-- bottom: profile + logout --}}
-      <div class="border-t border-gray-200 p-4">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
-            {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
-          </div>
-          <div class="text-xs">
-            <div class="font-semibold text-sm">{{ auth()->user()->name ?? 'Admin' }}</div>
-            <div class="text-gray-500">{{ auth()->user()->email ?? '' }}</div>
-          </div>
-          <div class="ms-auto"> <a href="{{ route('profile.edit') }}" class="text-xs underline text-ink/60 hover:text-ink">Profil</a> </div>
+      {{-- bottom: profile --}}
+      <div class="border-t border-gray-200 p-4" x-data="{ showLogoutConfirm: false }">
+        <div class="flex items-center">
+          <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg flex-1">
+            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
+              {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+            </div>
+              <div class="text-xs overflow-hidden">
+                <div class="font-semibold text-sm">{{ auth()->user()->name ?? 'Admin' }}</div>
+                <div class="text-gray-500 truncate" style="max-width:180px">{{ auth()->user()->email ?? '' }}</div>
+              </div>
+          </a>
+
+          <button type="button" @click="showLogoutConfirm = true" class="p-2 rounded-full hover:bg-gray-100 transition text-ink/70" title="Logout" aria-label="Logout">
+            {{-- power icon --}}
+            <span>⏻</span>
+          </button>
         </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-          @csrf
-          <button type="submit"
-                  class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-rose-100 px-3 py-2
-                         text-rose-700 hover:bg-rose-200 transition">
-            <span>⏻</span><span>Keluar</span>
-          </button>
-        </form>
+        <!-- Logout confirmation modal -->
+        <div x-show="showLogoutConfirm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+          <div class="absolute inset-0 bg-black/40" @click="showLogoutConfirm = false" aria-hidden="true"></div>
+
+          <div class="relative bg-white rounded-lg shadow-lg p-4 w-[320px] mx-4" @keydown.escape.window="showLogoutConfirm = false">
+            <h3 class="font-semibold text-lg text-rose-600 mb-2">Konfirmasi Logout</h3>
+            <p class="text-sm text-gray-600 mb-4">Apakah Anda yakin ingin mengakhiri sesi dan kembali ke halaman login?</p>
+
+            <div class="flex justify-end gap-2">
+              <button type="button" @click="showLogoutConfirm = false" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Batal</button>
+
+              <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="px-3 py-2 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200">Logout</button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
 
@@ -114,7 +134,7 @@
          aria-hidden="true"></div>
 
     {{-- ===================== MAIN COLUMN ===================== --}}
-    <div class="flex-1 flex flex-col lg:ml-64">
+  <div class="flex-1 flex flex-col lg:ml-72">
 
       {{-- mobile top bar --}}
       <header class="sticky top-0 z-10 bg-gray-50/80 backdrop-blur border-b border-gray-200 lg:hidden">

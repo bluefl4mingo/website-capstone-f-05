@@ -56,11 +56,20 @@
         </form>
       </div>
 
-      <button type="button"
-              @click="openNew()"  
-              class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
-        + Upload Audio
-      </button>
+      <div class="flex items-center gap-2">
+        <a href="{{ route('admin.export.audio.all') }}" 
+           class="inline-flex items-center rounded-full border border-aqua text-aqua px-4 py-2 hover:bg-aqua/30">
+          <svg class="w-5 h-5 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4V16M12 16L8 12M12 16L16 12M6 20H18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Download All
+        </a>
+        <button type="button"
+                @click="openNew()"  
+                class="inline-flex items-center rounded-full bg-aqua text-white px-4 py-2 hover:opacity-90">
+          + Upload Audio
+        </button>
+      </div>
     </div>
   </div>
 
@@ -72,7 +81,7 @@
           <th class="text-center px-4 py-3 min-w-[300px]">Item</th>
           <th class="text-center px-4 py-3">Kategori / Lokasi</th>
           <th class="text-center px-4 py-3">Filename</th>
-          <th class="text-center px-4 py-3">Lang</th>
+          <th class="text-center px-4 py-3">Format</th>
           <th class="text-center px-4 py-3">Durasi</th>
           <th class="text-center px-4 py-3">Storage</th>
           <th class="text-center px-4 py-3">Update</th>
@@ -87,15 +96,15 @@
               <div class="font-medium">#{{ $audio->item_id }} — {{ $audio->item->nama_item ?? 'N/A' }}</div>
             </td>
             <td class="px-4 py-3">
-              <div class="text-sm">{{ $audio->item->kategori ?? '—' }}</div>
-              <div class="text-xs text-gray-500">{{ $audio->item->lokasi_pameran ?? '—' }}</div>
+              <div class="text-sm text-center">{{ $audio->item->kategori ?? '—' }}</div>
+              <div class="text-xs text-center text-gray-500">{{ $audio->item->lokasi_pameran ?? '—' }}</div>
             </td>
             <td class="px-4 py-3">{{ $audio->nama_file }}</td>
-            <td class="px-4 py-3">{{ strtoupper($audio->format_file ?? 'id') }}</td>
-            <td class="px-4 py-3">{{ $audio->formatted_duration }}</td>
-            <td class="px-4 py-3">{{ config('filesystems.default') }}</td>
+            <td class="px-4 py-3 text-center">{{ strtoupper($audio->format_file ?? 'id') }}</td>
+            <td class="px-4 py-3 text-center">{{ $audio->formatted_duration }}</td>
+            <td class="px-4 py-3 text-center">{{ config('filesystems.default') }}</td>
             <td class="px-4 py-3">
-              {{ $audio->updated_at ? $audio->updated_at->format('Y-m-d H:i') : '—' }}
+              {{ $audio->updated_at ? $audio->updated_at->setTimezone('Asia/Jakarta')->format('Y-m-d H:i') : '—' }}
             </td>
             <td class="px-4 py-3 min-w-[150px] text-center">
               @php $status = $audio->sync_status ?? 'synced'; @endphp

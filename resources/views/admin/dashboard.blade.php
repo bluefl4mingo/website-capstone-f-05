@@ -43,7 +43,9 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
   {{-- Items --}}
   <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5 flex items-center gap-4">
-    <div class="text-2xl">⚱️</div>
+    <div class="text-2xl">
+      <img src="{{ asset('images/items.png') }}" alt="Items" class="h-10 w-10">
+    </div>
     <div>
       <div class="text-2xl font-semibold">{{ number_format($totalItems) }}</div>
       <div class="text-sm text-gray-500">Items</div>
@@ -57,7 +59,7 @@
     <div>
       <div class="text-2xl font-semibold">{{ number_format($totalAudio) }}</div>
       <div class="text-sm text-gray-500">Audio Tracks</div>
-      <div class="text-xs text-gray-400">semua bahasa</div>
+      <div class="text-xs text-gray-400">bahasa Indonesia</div>
     </div>
   </div>
 
@@ -151,8 +153,8 @@
         </li>
       </ul>
       <div class="mt-3 grid grid-cols-2 gap-2">
-        <a href="{{ route('admin.audio.index') }}" class="rounded-lg border px-3 py-2 text-center text-green-700 hover:bg-mint/50 text-sm">Tambah Audio</a>
-        <a href="{{ route('admin.nfc.index') }}"   class="rounded-lg border px-3 py-2 text-center text-green-700 hover:bg-mint/50 text-sm">Set NFC</a>
+        <a href="{{ route('admin.audio.index') }}" class="rounded-lg border px-3 py-2 text-center text-aqua hover:bg-mint/50 text-sm">Tambah Audio</a>
+        <a href="{{ route('admin.nfc.index') }}"   class="rounded-lg border px-3 py-2 text-center text-aqua hover:bg-mint/50 text-sm">Set NFC</a>
       </div>
     </div>
 
@@ -176,21 +178,21 @@
     {{-- Quick actions --}}
     <div class="rounded-2xl bg-white ring-1 ring-black/5 p-5">
       <h2 class="font-semibold mb-3">Quick Actions</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div class="grid grid-cols-2 gap-2">
         <a href="{{ route('admin.items.index') }}" 
-           class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">
+           class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-sm hover:bg-mint/50">
           New Item
         </a>
         <a href="{{ route('admin.audio.index') }}" 
-           class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70">
+           class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-sm hover:bg-mint/50">
           Upload Audio
         </a>
         <a href="{{ route('admin.export.nfc.mappings') }}" 
-           class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70" download>
+           class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-[13px] hover:bg-mint/50" download>
           Export Mapping
         </a>
         <a href="{{ route('admin.export.audio.all') }}" 
-           class="rounded-xl bg-mint/50 px-3 py-2 text-center text-green-700 hover:bg-mint/70"
+           class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-sm hover:bg-mint/50"
            onclick="if(!confirm('Download semua audio sebagai ZIP? Ini mungkin memakan waktu.')) return false;">
           Download All
         </a>
