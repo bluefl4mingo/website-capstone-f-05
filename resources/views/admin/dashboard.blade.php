@@ -101,7 +101,7 @@
             <div class="font-medium">{{ $it->nama_item }}</div>
             <div class="text-xs text-gray-500">
               {{ $it->kategori ?? '—' }} • {{ $it->lokasi_pameran ?? '—' }} •
-              {{ optional($it->created_at)->format('Y-m-d H:i') }}
+              {{ optional($it->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i') }}
             </div>
           </li>
         @empty
@@ -121,10 +121,10 @@
           <li class="py-2">
             <div class="font-medium">{{ $af->nama_file }}</div>
             <div class="text-xs text-gray-500">
-              #{{ $af->item_id }} — {{ $af->item->nama_item ?? 'N/A' }}
+              {{ $af->item->nama_item ?? 'N/A' }}
               • {{ strtoupper($af->format_file) }}
               • {{ $af->durasi ? gmdate('i:s', $af->durasi) : '—' }}
-              • {{ optional($af->created_at)->format('Y-m-d H:i') }}
+              • {{ optional($af->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i') }} 
             </div>
           </li>
         @empty
@@ -188,13 +188,13 @@
           Upload Audio
         </a>
         <a href="{{ route('admin.export.nfc.mappings') }}" 
-           class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-[13px] hover:bg-mint/50" download>
+           class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-sm hover:bg-mint/50" download>
           Export Mapping
         </a>
         <a href="{{ route('admin.export.audio.all') }}" 
            class="rounded-xl bg-mint/30 px-3 py-2 text-center text-aqua text-sm hover:bg-mint/50"
            onclick="if(!confirm('Download semua audio sebagai ZIP? Ini mungkin memakan waktu.')) return false;">
-          Download All
+          Download All Audio
         </a>
       </div>
     </div>
