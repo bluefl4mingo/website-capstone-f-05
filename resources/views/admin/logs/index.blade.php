@@ -163,7 +163,7 @@
       <tbody class="divide-y">
         @forelse($logs as $log)
           <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3">{{ $log->waktu_aktivitas->format('Y-m-d H:i:s') }}</td>
+            <td class="px-4 py-3">{{ $log->waktu_aktivitas->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}</td>
             <td class="px-4 py-3">{{ $log->user->name ?? 'N/A' }}</td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs
@@ -188,7 +188,7 @@
                           'id' => $log->id,
                           'user' => $log->user->name ?? 'N/A',
                           'aktivitas' => $log->aktivitas,
-                          'waktu' => $log->waktu_aktivitas->format('Y-m-d H:i:s'),
+                          'waktu' => $log->waktu_aktivitas->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                           'context' => $log->context
                         ]) }}; openDetail=true">
                   View
@@ -245,14 +245,14 @@
                 @endif
                 text-xs">⏺</span>
               <h3 class="font-medium">{{ $log->user->name ?? 'N/A' }} — {{ str_replace('_', ' ', $log->aktivitas) }}</h3>
-              <time class="text-xs text-gray-500">{{ $log->waktu_aktivitas->format('Y-m-d H:i:s') }}</time>
+              <time class="text-xs text-gray-500">{{ $log->waktu_aktivitas->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}</time>
               <p class="text-sm mt-1">{{ $log->context['nama_item'] ?? $log->context['nama_file'] ?? $log->context['kode_tag'] ?? '—' }}</p>
               <button class="mt-2 px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50"
                       @click="selected = {{ json_encode([
                         'id' => $log->id,
                         'user' => $log->user->name ?? 'N/A',
                         'aktivitas' => $log->aktivitas,
-                        'waktu' => $log->waktu_aktivitas->format('Y-m-d H:i:s'),
+                        'waktu' => $log->waktu_aktivitas->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                         'context' => $log->context
                       ]) }}; openDetail=true">
                 View Detail

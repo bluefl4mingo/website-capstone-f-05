@@ -12,20 +12,19 @@
     <div class="grid md:grid-cols-2 gap-10 items-center px-6 mb-10">
       {{-- Left: text content --}}
       <div>
-        <h1 class="text-4xl font-semibold text-ink mb-5">Website Admin Vredeburg</h1>
+        <h1 class="text-4xl font-semibold text-ink mb-5">Admin Vredeburg</h1>
         <p class="text-ink/70 leading-relaxed mb-6">
-          Vestibulum molestie nisl nec nunc viverra efficitur. 
-          Efficiunt ornare aliquam. Proin at est lectus, risus quis sagittis porta.
+          Dashboard prototipe ini digunakan untuk mengelola konten Smart Audio Guide Museum Benteng Vredeburg Yogyakarta. Melalui web ini, admin dapat mengunggah dan memperbarui audio guide, mengatur tag NFC, serta memantau item pameran secara terpusat.
         </p>
 
         <ul class="space-y-2 text-ink/80">
           <li class="flex items-center gap-3">
             <span class="size-2 rounded-full bg-pink-400"></span>
-            Fusce luctus blandit nisi.
+            Kelola file audio dan tag NFC secara terpusat
           </li>
           <li class="flex items-center gap-3">
             <span class="size-2 rounded-full bg-pink-400"></span>
-            Ut imperdiet dui at tincidunt mattis.
+            Pantau item pameran yang terhubung dengan sistem audio guide
           </li>
         </ul>
 
