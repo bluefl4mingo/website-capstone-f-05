@@ -44,12 +44,10 @@
       {{-- Filters --}}
       <div class="flex items-center gap-2">
         <form method="GET" class="flex items-center gap-2">
-          <select name="item" class="rounded-lg border-gray-200">
+            <select name="item" class="rounded-lg border-gray-200">
             <option value="">Semua Item</option>
             @foreach($items as $item)
-              <option value="{{ $item->id }}" @selected($selectedItemId === $item->id)>
-                #{{ $item->id }} — {{ $item->nama_item }}
-              </option>
+              <option value="{{ $item->id }}" @selected($selectedItemId === $item->id)>{{ $item->nama_item }}</option>
             @endforeach
           </select>
           <button type="submit" class="px-3 py-2 rounded-lg border hover:bg-aqua/20">Terapkan</button>
@@ -93,7 +91,7 @@
         @forelse($audioFiles as $audio)
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-3 min-w-[300px]">
-              <div class="font-medium">#{{ $audio->item_id }} — {{ $audio->item->nama_item ?? 'N/A' }}</div>
+              <div class="font-medium">{{ $audio->item->nama_item ?? 'N/A' }}</div>
             </td>
             <td class="px-4 py-3">
               <div class="text-sm text-center">{{ $audio->item->kategori ?? '—' }}</div>
@@ -223,7 +221,7 @@
                   x-show="isEdit || {{ $item->audio_files_count === 0 ? 'true' : 'false' }}"
                   :disabled="!isEdit && {{ $item->audio_files_count > 0 ? 'true' : 'false' }}"
                 >
-                  #{{ $item->id }} — {{ $item->nama_item }}
+                  {{ $item->nama_item }}
                   @if($item->audio_files_count > 0 && false) (sudah ada audio) @endif
                 </option>
               @endforeach

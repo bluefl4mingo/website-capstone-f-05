@@ -145,18 +145,18 @@
                         required>
                     <option value="">— Pilih item —</option>
                     @foreach($items as $item)
-                        <option value="{{ $item->id }}"
-                                x-bind:selected="selectedTag && selectedTag.item_id == {{ $item->id }}">
-                            #{{ $item->id }} — {{ $item->nama_item }}
-                        </option>
+            <option value="{{ $item->id }}"
+                x-bind:selected="selectedTag && selectedTag.item_id == {{ $item->id }}">
+              {{ $item->nama_item }}
+            </option>
                     @endforeach
                     {{-- Show current item in edit mode --}}
                     @foreach($tags as $tag)
                         @if($tag->item && !$items->contains($tag->item_id))
                             <template x-if="selectedTag && selectedTag.id == {{ $tag->id }}">
-                                <option value="{{ $tag->item_id }}" selected>
-                                    #{{ $tag->item_id }} — {{ $tag->item->nama_item }}
-                                </option>
+                <option value="{{ $tag->item_id }}" selected>
+                  {{ $tag->item->nama_item }}
+                </option>
                             </template>
                         @endif
                     @endforeach
