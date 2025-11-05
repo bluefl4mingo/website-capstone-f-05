@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Log;
 class NfcMappingController extends Controller
 {
     /**
-     * Generate and download CSV mapping of NFC tags to audio files
+     * Get NFC to audio mapping in simple JSON format
      * 
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function exportCsv(Request $request)
+    public function exportJson(Request $request)
     {
         try {
             // Get all NFC tags with their related items and audio files
@@ -24,30 +24,23 @@ class NfcMappingController extends Controller
                 ->orderBy('kode_tag')
                 ->get();
 
-            // Create CSV lines
-            $csvLines = [];
-            
-            // Add header row
-            $csvLines[] = 'nfc_tag,audio_file';
+            // Create simple key-value mapping
+            $mappings = [];
 
-            // Add data rows
             foreach ($tags as $tag) {
                 if ($tag->item && $tag->item->audioFiles->isNotEmpty()) {
                     $audioFile = $tag->item->audioFiles->first();
                     
-                    // Escape commas in filenames
-                    $nfcTag = $this->escapeCsvField($tag->kode_tag);
-                    $audioFileName = $this->escapeCsvField($audioFile->nama_file);
+                    // Get file name with extension
+                    $fileName = $audioFile->nama_file;
+                    if (!pathinfo($fileName, PATHINFO_EXTENSION) && $audioFile->format_file) {
+                        $fileName = $fileName . '.' . $audioFile->format_file;
+                    }
                     
-                    $csvLines[] = $nfcTag . ',' . $audioFileName;
+                    // Simple key-value: NFC tag -> audio file path with /audio/ prefix
+                    $mappings[$tag->kode_tag] = '/audio/' . $fileName;
                 }
             }
-
-            // Join lines with proper line breaks
-            $csvContent = implode("\r\n", $csvLines);
-            
-            // Add BOM for Excel compatibility
-            $csvContent = "\xEF\xBB\xBF" . $csvContent;
 
             // Log the export activity (only if user is authenticated)
             if (auth()->check()) {
@@ -56,46 +49,30 @@ class NfcMappingController extends Controller
                     'aktivitas' => 'export_nfc_mapping',
                     'waktu_aktivitas' => now(),
                     'context' => json_encode([
-                        'total_mappings' => count($csvLines) - 1, // Exclude header
-                        'format' => 'csv',
+                        'total_mappings' => count($mappings),
+                        'format' => 'json',
                         'timestamp' => now()->toDateTimeString(),
                     ]),
                 ]);
             }
 
-            // Generate filename with timestamp
-            $filename = 'nfc_audio_mapping_' . date('Ymd_His') . '.csv';
-
-            // Return CSV response with proper headers
-            return response($csvContent, 200)
-                ->header('Content-Type', 'text/csv; charset=UTF-8')
-                ->header('Content-Description', 'File Transfer')
-                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-                ->header('Content-Transfer-Encoding', 'binary')
-                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
-                ->header('Pragma', 'public')
-                ->header('Expires', '0');
+            // Return simple JSON mapping
+            return response()->json($mappings, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         } catch (\Exception $e) {
-            Log::error('CSV Export Error: ' . $e->getMessage(), [
+            Log::error('JSON Export Error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             
-            // If called from web route, redirect back with error
-            if (!$request->expectsJson()) {
-                return back()->with('error', 'Gagal mengekspor CSV: ' . $e->getMessage());
-            }
-            
-            // If called from API, return JSON error
             return response()->json([
-                'error' => 'Failed to generate CSV',
+                'error' => 'Failed to generate JSON mapping',
                 'message' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get JSON format of NFC to audio mapping
+     * Get detailed JSON format of NFC to audio mapping
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -113,9 +90,15 @@ class NfcMappingController extends Controller
                 if ($tag->item && $tag->item->audioFiles->isNotEmpty()) {
                     $audioFile = $tag->item->audioFiles->first();
                     
+                    // Get file name with extension
+                    $fileName = $audioFile->nama_file;
+                    if (!pathinfo($fileName, PATHINFO_EXTENSION) && $audioFile->format_file) {
+                        $fileName = $fileName . '.' . $audioFile->format_file;
+                    }
+                    
                     $mappings[] = [
                         'nfc_tag' => $tag->kode_tag,
-                        'audio_file' => $audioFile->nama_file,
+                        'audio_file' => $fileName,
                         'item_id' => $tag->item_id,
                         'item_name' => $tag->item->nama_item,
                         'audio_id' => $audioFile->id,
@@ -135,7 +118,7 @@ class NfcMappingController extends Controller
                     'waktu_aktivitas' => now(),
                     'context' => json_encode([
                         'total_mappings' => count($mappings),
-                        'format' => 'json',
+                        'format' => 'json_detailed',
                     ]),
                 ]);
             }
@@ -155,25 +138,5 @@ class NfcMappingController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Escape CSV field if it contains comma, quotes, or newlines
-     * 
-     * @param string $field
-     * @return string
-     */
-    private function escapeCsvField(?string $field): string
-    {
-        if ($field === null) {
-            return '';
-        }
-
-        // If field contains comma, quotes, or newlines, wrap in quotes and escape quotes
-        if (preg_match('/[,"\r\n]/', $field)) {
-            return '"' . str_replace('"', '""', $field) . '"';
-        }
-
-        return $field;
     }
 }

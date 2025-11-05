@@ -19,10 +19,10 @@
 
     {{-- ============= SIDEBAR (desktop fixed / mobile drawer) ============= --}}
     <aside
-      class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col justify-between
-             transform transition-transform duration-200
-             -translate-x-full lg:translate-x-0"
-  :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+      class="fixed inset-y-0 left-0 z-40 w-64 lg:w-80 bg-white border-r border-gray-200 flex flex-col justify-between
+             transform transition-transform duration-200 ease-in-out
+             lg:translate-x-0"
+      :class="sidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full lg:translate-x-0 w-80'">
 
       {{-- top / nav --}}
       <div class="p-6">
@@ -134,7 +134,7 @@
          aria-hidden="true"></div>
 
     {{-- ===================== MAIN COLUMN ===================== --}}
-  <div class="flex-1 flex flex-col lg:ml-72">
+    <div class="flex-1 flex flex-col lg:ml-80">
 
       {{-- mobile top bar --}}
       <header class="sticky top-0 z-10 bg-gray-50/80 backdrop-blur border-b border-gray-200 lg:hidden">
@@ -162,6 +162,24 @@
             <div class="flex items-center justify-between">
               <span>{{ session('status') }}</span>
               <button @click="show = false" class="text-green-600 hover:text-green-800">✕</button>
+            </div>
+          </div>
+        @endif
+
+        @if(session('success'))
+          <div class="mb-4 rounded-lg bg-green-50 p-4 text-green-800 border border-green-200" x-data="{ show: true }" x-show="show" x-transition>
+            <div class="flex items-center justify-between">
+              <span>{{ session('success') }}</span>
+              <button @click="show = false" class="text-green-600 hover:text-green-800">✕</button>
+            </div>
+          </div>
+        @endif
+
+        @if(session('error'))
+          <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-800 border border-red-200" x-data="{ show: true }" x-show="show" x-transition>
+            <div class="flex items-center justify-between">
+              <span>{{ session('error') }}</span>
+              <button @click="show = false" class="text-red-600 hover:text-red-800">✕</button>
             </div>
           </div>
         @endif
