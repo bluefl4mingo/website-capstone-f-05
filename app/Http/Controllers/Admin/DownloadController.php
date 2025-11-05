@@ -113,13 +113,13 @@ class DownloadController extends Controller
                 }
             }
 
-            // Add a README.txt file with information
+            // Add JSON mapping file to ZIP
+            $jsonContent = $this->generateJsonMapping($audioFiles);
+            $zip->addFromString('nfc_audio_mapping.json', $jsonContent);
+
+            // Add README.txt file with information
             $readmeContent = $this->generateReadme($downloadedCount, $failedFiles, $totalSize);
             $zip->addFromString('README.txt', $readmeContent);
-
-            // Add CSV mapping file
-            $csvContent = $this->generateCsvMapping($audioFiles);
-            $zip->addFromString('nfc_audio_mapping.csv', $csvContent);
 
             // Close the ZIP file
             $zip->close();
@@ -224,12 +224,36 @@ class DownloadController extends Controller
     }
 
     /**
+     * Generate JSON mapping content
+     */
+    private function generateJsonMapping($audioFiles): string
+    {
+        $mappings = [];
+
+        foreach ($audioFiles as $audio) {
+            // Get file name with extension
+            $fileName = $audio->nama_file;
+            if (!pathinfo($fileName, PATHINFO_EXTENSION) && $audio->format_file) {
+                $fileName = $fileName . '.' . $audio->format_file;
+            }
+            
+            if ($audio->item && $audio->item->nfcTags->isNotEmpty()) {
+                foreach ($audio->item->nfcTags as $tag) {
+                    $mappings[$tag->kode_tag] = '/audio/' . $fileName;
+                }
+            }
+        }
+
+        return json_encode($mappings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
      * Generate README content
      */
     private function generateReadme(int $downloadedCount, array $failedFiles, int $totalSize): string
     {
         $content = "==============================================\n";
-        $content .= "  AUDIO FILES EXPORT - Museum Audio Guide\n";
+        $content .= "  AUDIO FILES EXPORT - Museum Benteng Vredeburg Audio Guide\n";
         $content .= "==============================================\n\n";
         $content .= "Export Date: " . now()->format('Y-m-d H:i:s') . "\n";
         $content .= "Total Files: {$downloadedCount}\n";
@@ -237,8 +261,6 @@ class DownloadController extends Controller
         
         $content .= "FILE ORGANIZATION\n";
         $content .= "-----------------\n";
-        $content .= "All audio files are in the root directory.\n";
-        $content .= "File names include their original extensions (.mp3, .wav, etc.)\n\n";
         
         if (!empty($failedFiles)) {
             $content .= "FAILED DOWNLOADS\n";
@@ -252,40 +274,9 @@ class DownloadController extends Controller
         
         $content .= "\nNFC MAPPING\n";
         $content .= "-----------\n";
-        $content .= "See 'nfc_audio_mapping.csv' for NFC tag to audio file mappings.\n\n";
+        $content .= "See 'nfc_audio_mapping.json' for NFC tag to audio file mappings.\n";
         
         return $content;
-    }
-
-    /**
-     * Generate CSV mapping content
-     */
-    private function generateCsvMapping($audioFiles): string
-    {
-        $csvLines = [];
-        $csvLines[] = 'nfc_tag,audio_file,item_name,item_id';
-
-        foreach ($audioFiles as $audio) {
-            // Get file name with extension
-            $fileName = $audio->nama_file;
-            if (!pathinfo($fileName, PATHINFO_EXTENSION) && $audio->format_file) {
-                $fileName = $fileName . '.' . $audio->format_file;
-            }
-            
-            if ($audio->item && $audio->item->nfcTags->isNotEmpty()) {
-                foreach ($audio->item->nfcTags as $tag) {
-                    $csvLines[] = sprintf(
-                        '%s,%s,%s,%d',
-                        $tag->kode_tag,
-                        $fileName,
-                        str_replace(',', ';', $audio->item->nama_item),
-                        $audio->item_id
-                    );
-                }
-            }
-        }
-
-        return implode("\n", $csvLines);
     }
 
     /**

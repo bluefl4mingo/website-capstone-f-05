@@ -59,7 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::view('/devices', 'admin.devices.index')->name('devices.index');
 
         // Downloads & Exports
-        Route::get('/export/nfc-mappings', [NfcMappingController::class, 'exportCsv'])->name('export.nfc.mappings');
+        Route::get('/export/nfc-mappings', [NfcMappingController::class, 'exportJson'])->name('export.nfc.mappings');
         Route::get('/export/audio-all', [DownloadController::class, 'downloadAllAudio'])->name('export.audio.all');
         Route::get('/export/audio-stats', [DownloadController::class, 'getDownloadStats'])->name('export.audio.stats');
     });
