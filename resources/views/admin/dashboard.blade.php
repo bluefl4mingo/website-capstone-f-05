@@ -25,10 +25,10 @@
   $itemsNoNfc   = $totalItems - $itemsWithNfc;
 
   // --- Recent activity (not realtime; just latest records) ---
-  $recentItems = Item::latest('created_at')->take(5)->get(['id','nama_item','kategori','lokasi_pameran','created_at']);
+  $recentItems = Item::latest('created_at')->take(10)->get(['id','nama_item','kategori','lokasi_pameran','created_at']);
   $recentAudio = AudioFile::with('item:id,nama_item')
                   ->latest('created_at')
-                  ->take(5)
+                  ->take(10)
                   ->get(['id','item_id','nama_file','format_file','durasi','created_at']);
 
   // --- Breakdown by category (top 6) ---
