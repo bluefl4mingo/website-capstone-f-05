@@ -4,7 +4,7 @@
 @section('page-title','Items')
 
 @section('content')
-<div x-data="{ openCreate:false, openDetail:false, detailItem:null }" class="space-y-4">
+<div x-data="{ openCreate:false, openDetail:false, openEdit:false, detailItem:null, editItem:null }" class="space-y-4">
 
     {{-- Top bar: title, search, filters, create --}}
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -130,10 +130,10 @@
                     <td class="px-4 py-3 text-center">{{ $item->tanggal_penambahan ? \Carbon\Carbon::parse($item->tanggal_penambahan)->isoFormat('D MMM Y') : '—' }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-2">
-                            {{-- Detail/Edit (placeholder) --}}
+                            {{-- Detail --}}
                             <button
                             type="button"
-                            class="px-3 py-1.5 rounded-lg border text-sm text-aqua hover:bg-gray-50"
+                            class="flex items-center justify-center h-12 px-3 rounded-lg border text-sm text-aqua hover:bg-mint/20"
                             @click="
                                 detailItem = {
                                 id: {{ $item->id }},
@@ -142,8 +142,8 @@
                                 kategori: @js($item->kategori),
                                 lokasi_pameran: @js($item->lokasi_pameran),
                                 tanggal_penambahan: @js(optional($item->tanggal_penambahan)->format('Y-m-d')),
-                                created_at: @js(optional($item->created_at)->format('Y-m-d H:i')),
-                                updated_at: @js(optional($item->updated_at)->format('Y-m-d H:i')),
+                                created_at: @js(optional($item->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i')),
+                                updated_at: @js(optional($item->updated_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i')),
                                 audio_files_count: {{ $item->audio_files_count }},
                                 nfc_tags_count: {{ $item->nfc_tags_count }},
                                 audio_files: @js($item->audioFiles->map->only(['id','nama_file','format_file','lokasi_penyimpanan','created_at'])),
@@ -155,19 +155,37 @@
                             Detail
                             </button>
 
+                            {{-- Edit --}}
+                            <button
+                            type="button"
+                            class="flex items-center justify-center min-w-[60px] h-12 px-3 rounded-lg border text-sm text-amber-600 hover:bg-amber-50"
+                            @click="
+                                editItem = {
+                                id: {{ $item->id }},
+                                nama_item: @js($item->nama_item),
+                                deskripsi: @js($item->deskripsi),
+                                kategori: @js($item->kategori),
+                                lokasi_pameran: @js($item->lokasi_pameran),
+                                tanggal_penambahan: new Date().toISOString().split('T')[0]
+                                };
+                                openEdit = true;
+                            "
+                            >
+                            Edit
+                            </button>
+
                             {{-- Manage Audio (go to audio page filtered by item) --}}
                             <a href="{{ route('admin.audio.index', ['item' => $item->id]) }}"
-                               class="px-3 py-1.5 rounded-lg bg-mint/40 text-sm text-center text-aqua hover:bg-mint/60">Kelola Audio</a>
+                               class="flex items-center text-center justify-center h-12 px-3 rounded-lg bg-mint/40 text-sm text-aqua hover:bg-mint/60">Kelola Audio</a>
 
                             {{-- Manage NFC --}}
                             <a href="{{ route('admin.nfc.index', ['item' => $item->id]) }}"
-                               class="px-3 py-1.5 rounded-lg bg-mint/20 text-sm text-center text-aqua hover:bg-mint/40">Kelola NFC</a>
-
+                               class="flex items-center text-center justify-center h-12 px-3 rounded-lg bg-mint/20 text-sm text-aqua hover:bg-mint/40">Kelola NFC</a>
                             {{-- Delete --}}
-                            <form method="POST" action="{{ route('admin.items.destroy', $item->id) }}" onsubmit="return confirm('Yakin ingin menghapus item ini?');">
+                            <form method="POST" action="{{ route('admin.items.destroy', $item->id) }}" onsubmit="return confirm('Yakin ingin menghapus item ini?');" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="inline-flex items-center justify-center h-12 px-3 rounded-lg border border-transparent bg-red-100 text-sm text-red-700 hover:bg-red-200">
+                                <button type="submit" class="flex items-center justify-center h-12 px-3 rounded-lg bg-red-100 text-sm text-red-700 hover:bg-red-200">
                                     Hapus
                                 </button>
                             </form>
@@ -317,7 +335,7 @@
                 </div>
                 <div>
                     <div class="text-xs text-gray-500">Ditambahkan</div>
-                    <div x-text="detailItem.tanggal_penambahan || '—'"></div>
+                    <div x-text="detailItem.created_at || '—'"></div>
                 </div>
                 <div>
                     <div class="text-xs text-gray-500">Diperbarui</div>
@@ -396,6 +414,78 @@
         <div class="mt-6 text-right">
             <button class="rounded-lg px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openDetail=false">Close</button>
         </div>
+        </div>
+    </div>
+    </template>
+
+    {{-- Edit Item Modal --}}
+    <template x-teleport="body">
+    <div
+        x-show="openEdit"
+        x-transition.opacity
+        @keydown.window.escape="openEdit = false"
+        class="fixed inset-0 z-50 flex items-start justify-center"
+        x-cloak
+    >
+        {{-- Overlay (click to close) --}}
+        <div class="absolute inset-0 bg-black/40" @click="openEdit = false"></div>
+
+        {{-- Dialog --}}
+        <div
+        x-show="openEdit"
+        x-transition
+        class="relative mt-20 w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5"
+        role="dialog"
+        aria-modal="true"
+        >
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Edit Item</h3>
+            <button class="p-2 rounded hover:bg-gray-100" @click="openEdit=false" aria-label="Close">✕</button>
+        </div>
+
+        <template x-if="editItem">
+        <form method="POST" 
+              :action="`{{ url('/admin/items') }}/${editItem.id}`" 
+              class="grid grid-cols-1 gap-4">
+            @csrf
+            @method('PATCH')
+            
+            <div>
+            <label class="text-sm font-medium">Nama Item</label>
+            <input type="text" name="nama_item" x-model="editItem.nama_item" class="mt-1 w-full rounded-lg border-gray-200" required>
+            </div>
+
+            <div>
+            <label class="text-sm font-medium">Deskripsi</label>
+            <textarea name="deskripsi" x-model="editItem.deskripsi" class="mt-1 w-full rounded-lg border-gray-200" rows="3"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm font-medium">Kategori</label>
+                <input type="text" name="kategori" x-model="editItem.kategori" class="mt-1 w-full rounded-lg border-gray-200">
+            </div>
+            <div>
+                <label class="text-sm font-medium">Lokasi Pameran</label>
+                <input type="text" name="lokasi_pameran" x-model="editItem.lokasi_pameran" class="mt-1 w-full rounded-lg border-gray-200">
+            </div>
+            </div>
+
+            <div>
+            <label class="text-sm font-medium">Tanggal Perubahan</label>
+            <input type="date" name="tanggal_penambahan" x-model="editItem.tanggal_penambahan" class="mt-1 w-full rounded-lg border-gray-200" required>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+            <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openEdit=false">
+                Batal
+            </button>
+            <button type="submit" class="rounded-full px-4 py-2 bg-amber-600 text-white hover:bg-amber-700">
+                Simpan Perubahan
+            </button>
+            </div>
+        </form>
+        </template>
         </div>
     </div>
     </template>
