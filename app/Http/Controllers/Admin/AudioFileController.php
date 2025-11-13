@@ -47,7 +47,7 @@ class AudioFileController extends Controller
         $validated = $request->validate([
             'item_id'   => ['required', 'exists:items,id'],
             'nama_file' => ['required', 'string', 'max:255'],
-            'file'      => ['required', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:10240'],
+            'file'      => ['required', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:51200'],
         ]);
 
         if (AudioFile::where('item_id', $validated['item_id'])->exists()) {
@@ -127,7 +127,7 @@ class AudioFileController extends Controller
         $validated = $request->validate([
             'nama_file' => ['required', 'string', 'max:255'],
             'item_id'   => ['required', 'exists:items,id'],
-            'file'      => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:10240'],
+            'file'      => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:51200'],
         ]);
 
         if ((int)$validated['item_id'] !== (int)$audioFile->item_id) {
