@@ -125,19 +125,35 @@ class ItemController extends Controller
         return DB::transaction(function () use ($item) {
             $itemId = $item->id;
             $itemName = $item->nama_item;
+            
+            // Get counts before deletion for logging
+            $audioCount = $item->audioFiles()->count();
+            $nfcCount = $item->nfcTags()->count();
+            
+            // Get audio file paths for logging
+            $audioFiles = $item->audioFiles()
+                ->get(['id', 'nama_file', 'lokasi_penyimpanan'])
+                ->toArray();
 
+            // Delete the item (cascade delete will handle audio files and NFC tags)
             $item->delete();
 
             ActivityLog::create([
                 'user_id' => auth()->id(),
                 'aktivitas' => 'delete_item',
                 'waktu_aktivitas' => now(),
-                'context' => ['item_id' => $itemId, 'nama_item' => $itemName],
+                'context' => [
+                    'item_id' => $itemId, 
+                    'nama_item' => $itemName,
+                    'deleted_audio_files' => $audioCount,
+                    'deleted_nfc_tags' => $nfcCount,
+                    'audio_files' => $audioFiles,
+                ],
             ]);
 
             return redirect()
                 ->route('admin.items.index')
-                ->with('status', 'Item berhasil dihapus.');
+                ->with('status', "Item berhasil dihapus beserta {$audioCount} audio file dan {$nfcCount} NFC tag.");
         });
     }
 }
