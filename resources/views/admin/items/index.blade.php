@@ -4,7 +4,33 @@
 @section('page-title','Items')
 
 @section('content')
-<div x-data="{ openCreate:false, openDetail:false, openEdit:false, detailItem:null, editItem:null }" class="space-y-4">
+<div x-data="{ 
+  openCreate: false, 
+  openDetail: false, 
+  openEdit: false, 
+  detailItem: null, 
+  editItem: null,
+  processing: false,
+  processingProgress: 0,
+  
+  closeCreateModal() {
+    if(!this.processing) {
+      this.openCreate = false;
+      this.processing = false;
+      this.processingProgress = 0;
+      if(this.$refs.createForm) this.$refs.createForm.reset();
+    }
+  },
+  
+  closeEditModal() {
+    if(!this.processing) {
+      this.openEdit = false;
+      this.processing = false;
+      this.processingProgress = 0;
+      this.editItem = null;
+    }
+  }
+}" class="space-y-4">
 
     {{-- Top bar: title, search, filters, create --}}
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -230,12 +256,11 @@
     <div
         x-show="openCreate"
         x-transition.opacity
-        @keydown.window.escape="openCreate = false"
         class="fixed inset-0 z-50 flex items-start justify-center"
         x-cloak
     >
-        {{-- Overlay (click to close) --}}
-        <div class="absolute inset-0 bg-black/40" @click="openCreate = false"></div>
+        {{-- Overlay (non-interactive) --}}
+        <div class="absolute inset-0 bg-black/40"></div>
 
         {{-- Dialog --}}
         <div
@@ -247,10 +272,15 @@
         >
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">Item Baru</h3>
-            <button class="p-2 rounded hover:bg-gray-100" @click="openCreate=false" aria-label="Close">✕</button>
+            <button type="button" @click="closeCreateModal()" :disabled="processing" class="p-2 rounded hover:bg-gray-100 disabled:hover:bg-transparent" aria-label="Close">✕</button>
         </div>
 
-        <form method="POST" action="{{ route('admin.items.store') }}" class="grid grid-cols-1 gap-4">
+        {{-- Progress Bar --}}
+        <div x-show="processing" style="width: 100%" class="mb-4 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-full bg-aqua animate-pulse"></div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.items.store') }}" @submit="processing = true;" x-ref="createForm" class="grid grid-cols-1 gap-4">
             @csrf
             <div>
             <label class="text-sm font-medium">Nama Item</label>
@@ -279,10 +309,10 @@
             </div>
 
             <div class="mt-6 flex justify-end gap-2">
-            <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openCreate=false">
+            <button type="button" @click="closeCreateModal()" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:hover:bg-gray-100">
                 Batal
             </button>
-            <button type="submit" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90">
+            <button type="submit" :disabled="processing" class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90 disabled:hover:opacity-100">
                 Simpan
             </button>
             </div>
@@ -423,12 +453,11 @@
     <div
         x-show="openEdit"
         x-transition.opacity
-        @keydown.window.escape="openEdit = false"
         class="fixed inset-0 z-50 flex items-start justify-center"
         x-cloak
     >
-        {{-- Overlay (click to close) --}}
-        <div class="absolute inset-0 bg-black/40" @click="openEdit = false"></div>
+        {{-- Overlay --}}
+        <div class="absolute inset-0 bg-black/40"></div>
 
         {{-- Dialog --}}
         <div
@@ -440,13 +469,26 @@
         >
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">Edit Item</h3>
-            <button class="p-2 rounded hover:bg-gray-100" @click="openEdit=false" aria-label="Close">✕</button>
+            <button class="p-2 rounded hover:bg-gray-100 disabled:hover:bg-transparent" @click="if(!processing) { openEdit = false; processing = false; processingProgress = 0; }" :disabled="processing" aria-label="Close">✕</button>
+        </div>
+
+        {{-- Progress bar --}}
+        <div x-show="processing" x-cloak class="mb-4">
+          <div class="flex items-center justify-between text-sm mb-2">
+            <span class="font-medium text-gray-700">Processing...</span>
+            <span class="text-gray-600">...</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-aqua h-2.5 rounded-full transition-all duration-300 animate-pulse" 
+                 style="width: 100%"></div>
+          </div>
         </div>
 
         <template x-if="editItem">
         <form method="POST" 
               :action="`{{ url('/admin/items') }}/${editItem.id}`" 
-              class="grid grid-cols-1 gap-4">
+              class="grid grid-cols-1 gap-4"
+              @submit="processing = true;">
             @csrf
             @method('PATCH')
             
@@ -480,8 +522,9 @@
             <button type="button" class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200" @click="openEdit=false">
                 Batal
             </button>
-            <button type="submit" class="rounded-full px-4 py-2 bg-amber-600 text-white hover:bg-amber-700">
-                Simpan Perubahan
+            <button type="submit" class="rounded-full px-4 py-2 bg-amber-600 text-white hover:bg-amber-700" :disabled="processing">
+                <span x-show="!processing">Simpan Perubahan</span>
+                <span x-show="processing">Processing...</span>
             </button>
             </div>
         </form>

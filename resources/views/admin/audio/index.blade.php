@@ -20,6 +20,7 @@
       this.editId=null;
       this.form = { item_id: {{ $selectedItemId ?: 'null' }}, file: null, nama_file: '' };
       this.openUpload = true;
+      this.$nextTick(() => { if (this.$refs.fileInput) this.$refs.fileInput.value = null; });
     },
 
     // open for REPLACE an existing audio
@@ -28,6 +29,22 @@
       this.editId=id;
       this.form = { item_id: itemId, file: null, nama_file: nama };
       this.openUpload = true;
+      this.$nextTick(() => { if (this.$refs.fileInput) this.$refs.fileInput.value = null; });
+    },
+
+    // close modal and reset state
+    closeUpload(){
+      if(!this.uploading){
+        this.openUpload=false;
+        this.uploading=false;
+        this.uploadProgress=0;
+        this.isEdit=false;
+        this.editId=null;
+        this.form = { item_id: {{ $selectedItemId ?: 'null' }}, file: null, nama_file: '' };
+        this.$nextTick(() => {
+          if (this.$refs.fileInput) this.$refs.fileInput.value = null;
+        });
+      }
     }
   }"
   x-cloak
@@ -160,27 +177,26 @@
     <div x-show="openUpload"
          x-transition.opacity
          x-cloak
-         @keydown.window.escape="openUpload=false"
          class="fixed inset-0 z-50 flex items-start justify-center">
-      <div class="absolute inset-0 bg-black/40" @click="openUpload=false"></div>
+      <div class="absolute inset-0 bg-black/40"></div>
 
       <div x-show="openUpload" x-transition
            class="relative mt-20 w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5"
            role="dialog" aria-modal="true">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold" x-text="isEdit ? 'Ganti Audio' : 'Upload Audio'"></h3>
-          <button type="button" class="p-2 rounded hover:bg-gray-100" @click="openUpload=false">✕</button>
+          <button type="button" class="p-2 rounded hover:bg-gray-100" @click="if(!uploading) closeUpload()" :disabled="uploading">✕</button>
         </div>
 
          {{-- Progress bar --}}
         <div x-show="uploading" x-cloak class="mb-4">
           <div class="flex items-center justify-between text-sm mb-2">
             <span class="font-medium text-gray-700">Uploading...</span>
-            <span class="text-gray-600" x-text="`${uploadProgress}%`"></span>
+            <span class="text-gray-600">...</span>
           </div>
           <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-            <div class="bg-aqua h-2.5 rounded-full transition-all duration-300" 
-                 :style="`width: ${uploadProgress}%`"></div>
+            <div class="bg-aqua h-2.5 rounded-full transition-all duration-300 animate-pulse" 
+                 style="width: 100%"></div>
           </div>
         </div>
 
@@ -195,11 +211,6 @@
           class="grid grid-cols-1 gap-4"
           @submit="
             uploading = true;
-            uploadProgress = 0;
-            // simple simulated progress like the prototype
-            let __pb = setInterval(() => {
-              if (uploadProgress < 95) uploadProgress += 5;
-            }, 160);
           "
         >
           @csrf
@@ -235,7 +246,8 @@
               <label for="audio_nama_file" class="text-sm font-medium">Nama File</label>
               <input id="audio_nama_file" type="text" name="nama_file"
                     class="mt-1 w-full rounded-lg border-gray-200"
-                    x-model="form.nama_file" required>
+                    x-model="form.nama_file"
+                    required>
             </div>
             <div>
               <label for="audio_file" class="text-sm font-medium">
@@ -243,6 +255,7 @@
                 <span class="text-xs text-gray-500" x-show="isEdit">(opsional jika hanya ganti nama)</span>
               </label>
               <input id="audio_file" type="file" name="file"
+                    x-ref="fileInput"
                     accept=".wav,.mp3,.ogg,.m4a,audio/*"
                     class="mt-1 w-full border-gray-200"
                     @change="form.file = $event.target.files[0]"
@@ -255,13 +268,13 @@
             <div class="flex gap-2">
               <button type="button"
                       class="rounded-full px-4 py-2 bg-gray-100 hover:bg-gray-200"
-                      @click="openUpload=false; uploading=false; uploadProgress=0"
+                      @click="if(!uploading) closeUpload()"
                       :disabled="uploading">
                 Batal
               </button>
 
               <button type="submit"
-                      class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="rounded-full px-4 py-2 bg-aqua text-white hover:opacity-90"
                       :disabled="uploading">
                 <span x-show="!uploading">Upload</span>
                 <span x-show="uploading">Uploading...</span>
