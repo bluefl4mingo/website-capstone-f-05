@@ -44,6 +44,8 @@ class AudioFileController extends Controller
      */
     public function store(Request $request)
     {
+        $overallStart = microtime(true);
+
         $validated = $request->validate([
             'item_id'   => ['required', 'exists:items,id'],
             'nama_file' => ['required', 'string', 'max:255'],
@@ -57,14 +59,30 @@ class AudioFileController extends Controller
         }
 
         $disk = 'gcs';
-        return DB::transaction(function () use ($request, $validated, $disk) {
+        return DB::transaction(function () use ($request, $validated, $disk, $overallStart) {
             $file = $request->file('file');
             $ext  = $file->guessExtension() ?: $file->getClientOriginalExtension();
             $blob = 'audios/' . Str::uuid() . '.' . $ext;
 
             $duration = $this->extractAudioDuration($file);
 
+            $uploadStart = microtime(true);
             Storage::disk($disk)->put($blob, file_get_contents($file->getRealPath()));
+            $uploadEnd   = microtime(true);
+
+            $uploadMs = round(($uploadEnd - $uploadStart) * 1000, 2);
+            $totalMs  = round((microtime(true) - $overallStart) * 1000, 2);
+
+            // log ke laravel.log
+            \Log::info('Audio upload timing', [
+                'file_name' => $validated['nama_file'],
+                'size_kb'   => round($file->getSize() / 1024, 2),
+                'upload_ms' => $uploadMs,
+                'total_ms'  => $totalMs,
+            ]);
+
+            session()->flash('upload_time_ms', $uploadMs);
+            session()->flash('upload_total_ms', $totalMs);
 
             $audio = AudioFile::create([
                 'item_id'            => $validated['item_id'],
@@ -86,6 +104,8 @@ class AudioFileController extends Controller
                     'item_id'   => $audio->item_id,
                     'nama_file' => $audio->nama_file,
                     'durasi'    => $duration,
+                    // 'upload_ms' => $uploadMs,
+                    'total_ms'  => $totalMs,
                 ],
             ]);
 
