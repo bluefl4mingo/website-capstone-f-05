@@ -286,4 +286,13 @@
     </div>
   </template>
 </section>
+
+@if(session('upload_time_ms'))
+    <script>
+        console.log('%c[MAGIS] Audio upload selesai', 'color:#16a34a;font-weight:bold;');
+        console.log('  • Waktu upload (GCS put): {{ session('upload_time_ms') }} ms');
+        console.log('  • Total waktu request:    {{ session('upload_total_ms') }} ms');
+    </script>
+@endif
+
 @endsection
